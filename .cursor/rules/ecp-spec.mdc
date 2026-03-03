@@ -1,0 +1,13 @@
+---
+description: Rules for editing the ECP specification files
+globs: "spec.yaml,SPEC.md,README.md"
+alwaysApply: true
+---
+
+# ECP Specification Rules
+
+- `spec.yaml` is the canonical example ECP Context manifest. Changes MUST keep it valid against `src/schema/ecp-context.schema.ts`.
+- After editing `spec.yaml`, run `npm run validate` to verify schema conformance and structural integrity.
+- After editing any `.md` file, run `npm run lint:md` to check markdown lint.
+- TypeScript types in `src/types/ecp.ts` MUST stay in sync with the spec. If you add a new field to `spec.yaml`, add the corresponding type.
+- The JSON Schema in `src/schema/ecp-context.schema.ts` MUST stay in sync with the types and spec.

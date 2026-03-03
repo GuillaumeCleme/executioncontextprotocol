@@ -1,0 +1,13 @@
+---
+description: General development rules for the ECP repository
+alwaysApply: true
+---
+
+# General Rules
+
+- This is a TypeScript-first repository. All tooling, validation, and linting runs through NPM.
+- No Python dependencies. All validation and linting is done via NPM packages.
+- Run `npm run check` to execute the full suite: typecheck + lint + validate.
+- Keep `package.json` scripts as the single source of truth for all development commands.
+- Prefer `const` over `let`; never use `var`.
+- Use Prettier-compatible formatting (no trailing semicolons are acceptable if ESLint allows it).

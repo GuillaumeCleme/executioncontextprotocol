@@ -1,0 +1,30 @@
+{
+  "name": "executioncontextprotocol",
+  "version": "0.3.0",
+  "description": "Execution Control Protocol (ECP) — open specification for defining, packaging, versioning, and deploying AI agent environments",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "lint": "eslint . && markdownlint-cli2 '**/*.md' '#node_modules'",
+    "lint:ts": "eslint .",
+    "lint:md": "markdownlint-cli2 '**/*.md' '#node_modules'",
+    "validate": "tsx src/validate.ts",
+    "check": "npm run build && npm run lint && npm run validate"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^25.3.3",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "markdownlint-cli2": "^0.17.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.0.0"
+  },
+  "dependencies": {
+    "ajv": "^8.17.0",
+    "js-yaml": "^4.1.0"
+  }
+}

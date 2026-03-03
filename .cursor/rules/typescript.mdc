@@ -1,0 +1,15 @@
+---
+description: TypeScript coding standards for the ECP repository
+globs: "**/*.ts"
+alwaysApply: true
+---
+
+# TypeScript Rules
+
+- All code MUST be written in TypeScript with strict mode enabled.
+- Use ES module syntax (`import`/`export`), not CommonJS (`require`/`module.exports`).
+- File extensions in import paths must use `.js` (Node16 module resolution).
+- Prefer `interface` over `type` for object shapes; use `type` for unions and intersections.
+- No `any` unless explicitly justified with an `eslint-disable` comment.
+- Run `npm run build` (tsc --noEmit) to verify types before committing.
+- Run `npm run lint:ts` (eslint) to verify lint rules before committing.

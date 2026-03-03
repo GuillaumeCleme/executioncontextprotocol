@@ -2,31 +2,34 @@
 
 ## Cursor Cloud specific instructions
 
-This is a **specification-only repository** (Execution Control Protocol / ECP). There is no application code, no build system, no test suite, and no runnable services. The repo contains three files:
+This is a **specification-only repository** (Execution Control Protocol / ECP), bootstrapped as a TypeScript project. There are no runnable application services — the development workflow is editing Markdown docs, YAML specs, and TypeScript validation code.
 
-- `README.md` — High-level overview of the ECP specification
-- `SPEC.md` — Detailed protocol specification
-- `spec.yaml` — Example ECP Context manifest (YAML, `ecp/v0.3-draft`)
+### Repository structure
 
-### Linting
+| Path | Purpose |
+|---|---|
+| `README.md` | High-level ECP overview |
+| `SPEC.md` | Detailed protocol specification |
+| `spec.yaml` | Example ECP Context manifest (`ecp/v0.3-draft`) |
+| `src/types/ecp.ts` | TypeScript type definitions for the ECP spec |
+| `src/schema/ecp-context.schema.ts` | JSON Schema (AJV) for runtime validation |
+| `src/validate.ts` | Validation script — schema + structural checks |
+| `.cursor/rules/` | Cursor rule files (MDC format) |
 
-Two linters are available after the update script runs:
+### NPM scripts (single source of truth)
 
-| Tool | Command | Scope |
-|---|---|---|
-| `yamllint` | `yamllint spec.yaml` | YAML syntax and style for `spec.yaml` |
-| `markdownlint` | `markdownlint README.md SPEC.md` | Markdown style for documentation |
+| Command | What it does |
+|---|---|
+| `npm run build` | TypeScript type-check (`tsc --noEmit`) |
+| `npm run lint` | ESLint + markdownlint |
+| `npm run lint:ts` | ESLint only |
+| `npm run lint:md` | Markdown lint only |
+| `npm run validate` | Parse `spec.yaml` and validate via AJV + structural checks |
+| `npm run check` | Full suite: build + lint + validate |
 
-**Note:** `yamllint` installs to `~/.local/bin`. If not on `PATH`, prefix with `export PATH="$HOME/.local/bin:$PATH"`.
+### Gotchas
 
-### Structural YAML validation
-
-To verify the spec parses correctly as YAML and inspect its structure:
-
-```sh
-python3 -c "import yaml; doc=yaml.safe_load(open('spec.yaml')); print(doc['apiVersion'], doc['kind'], doc['metadata']['name'])"
-```
-
-### No build / test / run steps
-
-There are no `npm`, `pip`, `cargo`, or other build/test commands. The development workflow is editing Markdown and YAML, then linting.
+- **No Python.** All tooling is NPM-based. Do not introduce `pip`, `yamllint` (Python), or any non-Node dependencies.
+- **AJV CJS/ESM interop:** `src/validate.ts` uses a `_Ajv.default ?? _Ajv` pattern because AJV's default export behaves differently under ESM. Do not simplify this import.
+- **Import extensions:** `tsconfig.json` uses `Node16` module resolution — all local imports must end with `.js` (even for `.ts` source files).
+- **Markdown lint config:** `.markdownlint.yaml` relaxes rules to match the existing doc style (long lines, multiple H1s, bare URLs, flexible list indentation).
