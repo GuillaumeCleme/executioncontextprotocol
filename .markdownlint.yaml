@@ -1,0 +1,20 @@
+# Markdownlint configuration for the ECP spec repository.
+# Relaxed rules to match the existing documentation style.
+
+# Allow long lines — spec documents naturally have longer lines
+MD013: false
+
+# Allow multiple top-level headings — SPEC.md uses H1 per major section
+MD025: false
+
+# Allow flexible list-marker spacing — the docs use 3-space indented lists
+MD030: false
+
+# Allow bare URLs — used for linking to MCP docs
+MD034: false
+
+# Allow inconsistent horizontal-rule styles — SPEC tables use dashes
+MD035: false
+
+# Allow heading-level jumps — SPEC uses H3 under H1 for design goals
+MD001: false
