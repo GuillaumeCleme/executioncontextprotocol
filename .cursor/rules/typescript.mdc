@@ -23,3 +23,17 @@ alwaysApply: true
 - **Schema component names** (in `spec.yaml` → `schemas:`): PascalCase (e.g. `Plan`, `RevenueFindings`).
 - **Optional `description`** field: every major ECP object interface SHOULD include an optional `description?: string` field, following OpenAPI's pattern of allowing documentation at every level.
 - **JSON Schema alignment:** Schema-related types (`SchemaDefinition`, `SchemaProperty`) MUST use `JsonSchemaType` for their `type` field, aligned with JSON Schema Draft 2020-12.
+
+## Documentation Conventions (from MCP Schema)
+
+- **JSDoc on every export:** every exported `interface`, `type`, and `const` MUST have a `/** ... */` JSDoc block describing its purpose.
+- **`@category` tag:** every exported JSDoc block MUST include a `@category` tag grouping it (e.g. `@category Context`, `@category Executors`, `@category Mounts`, `@category Policies`, `@category Schema`, `@category Common`).
+- **Property-level JSDoc:** every property on an exported interface MUST have a `/** ... */` comment explaining what it represents.
+- **`{@link Type}` references:** use `{@link TypeName}` in JSDoc to cross-reference related types.
+
+## Composition Conventions (from MCP Schema)
+
+- **`BaseMetadata`:** objects that have a programmatic `name` and optional `title` SHOULD extend `BaseMetadata` (mirrors MCP's `BaseMetadata`).
+- **`Extensible`:** major objects SHOULD extend `Extensible` to include the optional `_meta?: Record<string, unknown>` bag for non-standard extensions (mirrors MCP's `_meta` pattern).
+- **`extends` over repetition:** prefer interface composition (`extends`) over repeating `name`, `title`, `_meta`, or `description` fields across types.
+- **Version constant:** use `export const LATEST_PROTOCOL_VERSION` for the current spec version, and reference it via `typeof` where appropriate.
