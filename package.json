@@ -6,11 +6,12 @@
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit",
+    "generate:schema": "ts-json-schema-generator -p src/types/ecp.ts -t ECPContext --additional-properties --no-type-check -o dist/ecp-context.schema.json",
     "lint": "eslint . && markdownlint-cli2 '**/*.md' '#node_modules'",
     "lint:ts": "eslint .",
     "lint:md": "markdownlint-cli2 '**/*.md' '#node_modules'",
     "validate": "tsx src/validate.ts",
-    "check": "npm run build && npm run lint && npm run validate"
+    "check": "npm run build && npm run generate:schema && npm run lint && npm run validate"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
@@ -19,6 +20,7 @@
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.0.0",
     "markdownlint-cli2": "^0.17.0",
+    "ts-json-schema-generator": "^2.5.0",
     "tsx": "^4.0.0",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.0.0"

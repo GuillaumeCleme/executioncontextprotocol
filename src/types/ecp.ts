@@ -37,7 +37,6 @@ export interface InputDefinition {
   type: "string" | "number" | "boolean" | "integer";
   required?: boolean;
   default?: string | number | boolean;
-  fromSchema: string;
 }
 
 export interface OutputDefinition {
@@ -84,12 +83,15 @@ export interface Trigger {
 
 export type OrchestrationStrategy =
   | "single"
+  | "controller-specialist"
+  | "map-reduce"
+  | "hierarchical"
   | "delegate"
   | "swarm";
 
 export interface OrchestrationDefaults {
   maxDelegations?: number;
-  maxExecutors?: number;
+  maxSpecialists?: number;
   timeoutMs?: number;
 }
 

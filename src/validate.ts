@@ -7,7 +7,7 @@
  * a real executor, outputSchemaRef points to a declared schema, etc.).
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import _Ajv from "ajv";
 import yaml from "js-yaml";
@@ -16,8 +16,9 @@ import yaml from "js-yaml";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Ajv = (_Ajv as any).default ?? _Ajv;
 
-import { ecpContextSchema } from "./schema/ecp-context.schema.js";
 import type { ECPContext } from "./types/index.js";
+
+const SCHEMA_PATH = resolve(import.meta.dirname, "../dist/ecp-context.schema.json");
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -42,8 +43,15 @@ function pass(message: string): void {
 // ---------------------------------------------------------------------------
 
 function validateSchema(doc: unknown): ECPContext {
+  if (!existsSync(SCHEMA_PATH)) {
+    fail(
+      `Generated schema not found at ${SCHEMA_PATH}. Run "npm run generate:schema" first.`,
+    );
+  }
+
+  const schema = JSON.parse(readFileSync(SCHEMA_PATH, "utf-8"));
   const ajv = new Ajv({ allErrors: true, strict: false });
-  const validate = ajv.compile(ecpContextSchema);
+  const validate = ajv.compile(schema);
 
   if (!validate(doc)) {
     console.error("\nSchema validation errors:");
