@@ -143,7 +143,8 @@ function checkStructure(ctx: ECPContext): void {
 // ---------------------------------------------------------------------------
 
 function main(): void {
-  const specPath = resolve(process.cwd(), "spec.yaml");
+  const repoRoot = resolve(import.meta.dirname, "../../..");
+  const specPath = resolve(repoRoot, "spec.yaml");
 
   console.log(`\nValidating: ${specPath}\n`);
   console.log("--- Schema Validation (AJV) ---");

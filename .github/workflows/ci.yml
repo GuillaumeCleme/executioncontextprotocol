@@ -28,7 +28,7 @@ jobs:
         run: npm ci
 
       - name: Typecheck
-        run: npm run build
+        run: npm run build --workspace=@ecp/spec
 
       - name: Generate schema
         run: npm run generate:schema

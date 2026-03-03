@@ -1,0 +1,30 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["../spec/src/types/ecp.ts"],
+  "out": "dist",
+  "name": "Execution Control Protocol (ECP)",
+  "readme": "../../README.md",
+  "tsconfig": "../spec/tsconfig.json",
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "categorizeByGroup": true,
+  "categoryOrder": [
+    "Common",
+    "Context",
+    "Inputs",
+    "Outputs",
+    "Schema",
+    "Triggers",
+    "Orchestration",
+    "Executors",
+    "Mounts",
+    "Policies",
+    "*"
+  ],
+  "navigation": {
+    "includeCategories": true,
+    "includeGroups": true
+  },
+  "sort": ["kind", "alphabetical"],
+  "githubPages": true
+}

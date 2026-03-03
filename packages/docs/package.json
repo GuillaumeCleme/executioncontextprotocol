@@ -1,0 +1,14 @@
+{
+  "name": "@ecp/docs",
+  "version": "0.3.0",
+  "description": "Generated API documentation for the ECP specification types",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "typedoc"
+  },
+  "devDependencies": {
+    "typedoc": "^0.28.0",
+    "typescript": "^5.7.0"
+  }
+}
