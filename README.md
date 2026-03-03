@@ -103,16 +103,6 @@ A declarative, versioned, parameterized agent environment specification.
 
 Equivalent to a Dockerfile + image manifest.
 
-Defines:
-
-- definition
-- mcp.servers
-- inputs
-- mounts
-- policies
-- triggers
-- outputs
-
 Does not include ephemeral data.
 
 ------------------------------------------------------------------------
@@ -168,99 +158,7 @@ and difficult to distribute.
 
 ## ECP v0.1 Example Schema
 
-Below is an example Context manifest.
-
-``` yaml
-version: ecp/v0.1
-kind: Context
-
-metadata:
-  name: weekly-ecom-ops
-  version: 1.2.3
-  description: Weekly ecommerce operational intelligence context
-
-definition:
-  models:
-    - name: sonnet-4.5
-  instructions:
-    - role: system
-      content: You are an ecommerce expert...
-inputs:
-  shopify_store_id:
-    type: string
-    required: true
-
-  slack_channel:
-    type: string
-    default: "#ops"
-
-  jira_project:
-    type: string
-    required: true
-
-  refund_rate_threshold:
-    type: number
-    default: 0.08
-
-servers:
-  - name: shopify
-    type: mcp
-    url: https://mcp.example.com/shopify
-
-  - name: slack
-    type: mcp
-    url: https://mcp.example.com/slack
-
-  - name: jira
-    type: mcp
-    url: https://mcp.example.com/jira
-
-mounts:
-  - name: orders_last_7d
-    from:
-      server: shopify
-      tool: orders.list
-      args:
-        storeId: ${inputs.shopifyStoreId}
-        windowDays: 7
-    asType: Order[]
-
-  - name: tickets_open
-    from:
-      server: jira
-      tool: issues.search
-      args:
-        project: ${inputs.jiraProject}
-        jql: "statusCategory != Done"
-    asType: Issue[]
-
-policies:
-  allowed_tools:
-    - shopify:orders.list
-    - jira:issues.search
-    - slack:messages.post
-    - jira:issues.create
-
-  write_controls:
-    requires_approval:
-      - jira:issues.create
-
-  budgets:
-    max_tool_calls: 50
-    max_runtime_seconds: 120
-
-triggers:
-  - type: schedule
-    cron: "0 8 * * MON"
-
-outputs:
-  - type: slack.post
-    server: slack
-    tool: messages.post
-    args:
-      channel: ${inputs.slackChannel}
-      template: weekly_ops_brief
-```
+Included in this repository is an example Context manifest.
 
 ------------------------------------------------------------------------
 
