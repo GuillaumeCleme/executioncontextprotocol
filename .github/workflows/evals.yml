@@ -1,0 +1,62 @@
+name: Evals
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: "Model to use for evaluation"
+        required: false
+        default: "gpt-4o-mini"
+        type: string
+  schedule:
+    - cron: "0 6 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    name: Run Eval Suite
+    runs-on: ubuntu-latest
+    environment: evals
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run single-executor eval
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          npx tsx packages/cli/src/index.ts run \
+            examples/single-executor/context.yaml \
+            --input topic="Execution Control Protocol" \
+            --model ${{ inputs.model || 'gpt-4o-mini' }} \
+            --debug
+
+      - name: Run controller-specialist eval
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          npx tsx packages/cli/src/index.ts run \
+            examples/controller-specialist/context.yaml \
+            --input subject="Model Context Protocol" \
+            --model ${{ inputs.model || 'gpt-4o-mini' }} \
+            --debug
+
+      - name: Upload eval artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results-${{ github.run_number }}
+          path: artifacts/
+          retention-days: 30
