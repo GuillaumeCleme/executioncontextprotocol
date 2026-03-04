@@ -27,8 +27,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Typecheck
-        run: npm run build --workspace=@ecp/spec
+      - name: Typecheck (spec → runtime → cli)
+        run: npm run build
 
       - name: Generate schema
         run: npm run generate:schema
@@ -38,3 +38,6 @@ jobs:
 
       - name: Validate spec
         run: npm run validate
+
+      - name: CLI smoke test
+        run: npx tsx packages/cli/src/index.ts validate spec.yaml --input shopifyStoreId=test --input jiraProject=TEST
