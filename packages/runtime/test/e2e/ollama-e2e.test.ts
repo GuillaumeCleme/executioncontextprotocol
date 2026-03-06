@@ -134,10 +134,15 @@ function makeDelegateContext(): ECPContext {
         type: "agent",
         model: { provider: "ollama", name: OLLAMA_MODEL },
         instructions: [
-          "You are a research orchestrator.",
-          "Given a subject, produce a JSON object with exactly this key:",
-          '- "delegate": an array with one object: { "executor": "writer", "task": "<brief task description>" }',
-          "Respond ONLY with the JSON object.",
+          "You are a research orchestrator. You MUST output valid JSON and nothing else.",
+          "Given a subject, output a JSON object with a single key called delegate.",
+          "delegate is an array with exactly one item.",
+          "Each item has executor (always the string writer) and task (a brief task description).",
+          "",
+          "Example — if the subject is Solar Energy, output exactly:",
+          '{"delegate":[{"executor":"writer","task":"Write a report about Solar Energy"}]}',
+          "",
+          "Now do the same for the given subject. Output ONLY the JSON object.",
         ].join("\n"),
         outputSchemaRef: "#/schemas/Plan",
         mounts: [],
@@ -214,7 +219,7 @@ describe("E2E — Ollama real model", async () => {
   });
 
   describe.skipIf(!available)("delegate strategy", () => {
-    it("orchestrator delegates to writer and produces a Report", async () => {
+    it("orchestrator delegates to writer and produces a Report", { retry: 2, timeout: 120_000 }, async () => {
       const provider = new OllamaProvider({
         baseURL: OLLAMA_BASE_URL,
         defaultModel: OLLAMA_MODEL,
@@ -237,6 +242,7 @@ describe("E2E — Ollama real model", async () => {
       expect(result.executorOutputs.orchestrator).toBeDefined();
       const plan = result.executorOutputs.orchestrator;
       expect(plan).toHaveProperty("delegate");
+      expect(Array.isArray(plan.delegate)).toBe(true);
 
       expect(result.executorOutputs.writer).toBeDefined();
       const report = result.executorOutputs.writer;
@@ -244,6 +250,6 @@ describe("E2E — Ollama real model", async () => {
       expect(report).toHaveProperty("summary");
       expect(typeof report.title).toBe("string");
       expect(typeof report.summary).toBe("string");
-    }, 120_000);
+    });
   });
 });
