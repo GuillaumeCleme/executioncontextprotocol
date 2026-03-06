@@ -2,100 +2,100 @@
 
 ## Overview
 
-The **Execution Control Protocol (ECP)** defines a portable
-specification for configuring, orchestrating, and executing AI agent
-environments across systems.
+The **Execution Control Protocol (ECP)** defines a portable specification for configuring, orchestrating, and executing AI agent environments across systems.
 
-ECP is designed to sit **above Model Context Protocol (MCP)** and
-**alongside Agent‑to‑Agent (A2A)** communication systems.
+ECP is designed to sit **above Model Context Protocol (MCP)** and **alongside Agent-to-Agent (A2A)** communication systems.
 
 The protocol standardizes:
 
--   Agent orchestration
--   Context hydration
--   Tool invocation
--   Execution governance
--   Multi-agent coordination
--   Security boundaries
--   Portable context definitions
+* Agent orchestration
+* Context hydration
+* Tool invocation
+* Execution governance
+* Multi-agent coordination
+* Security boundaries
+* Portable context definitions
 
-ECP introduces a first‑class object called a **Context**, which
-represents a **complete execution environment for AI agents**.
+ECP introduces two primary top-level sources of action:
 
-A Context defines:
+* **Orchestrators**
+* **Executors**
 
--   Which agents participate
--   Which agent is the orchestrator
--   What triggers execution
--   What schemas define outputs
--   How agents are orchestrated
--   How each agent accesses tools and data
+These objects share a broadly similar execution interface, especially around **inputs** and **outputs**, while differing in certain coordination-specific properties.
 
-ECP intentionally **does not define model internals or reasoning
-chains**. Instead it defines the **execution surface and coordination
-rules**.
+A **Context** defines:
 
-------------------------------------------------------------------------
+* Which orchestrator is the entry point
+* Which executors participate
+* What triggers execution
+* What schemas define inputs and outputs
+* How orchestration is configured
+* How nested orchestration trees are structured
+
+ECP intentionally **does not define model internals or reasoning chains**. Instead it defines the **execution surface, coordination structure, and execution rules**.
+
+---
 
 # Design Goals
 
-ECP was designed around several principles:
+ECP was designed around several principles.
 
-### 1. Protocol Composability
+## 1. Protocol Composability
 
 ECP does not replace other protocols.
 
-Instead it coordinates them:
+Instead it coordinates them.
 
-  Layer   Responsibility
-  ------- -------------------------------------------
-  MCP     Tool discovery and invocation
-  A2A     Agent‑to‑agent communication
-  ECP     Agent orchestration and execution control
+| Layer | Responsibility                      |
+| ----- | ----------------------------------- |
+| MCP   | Tool discovery and invocation       |
+| A2A   | Agent-to-agent communication        |
+| ECP   | Orchestration and execution control |
 
-### 2. Deterministic Execution Surfaces
+## 2. Deterministic Execution Surfaces
 
-Agent environments should be inspectable and reproducible.
+Execution environments should be inspectable and reproducible.
 
 ECP achieves this through:
 
--   Declarative Context manifests
--   Explicit mounts
--   Explicit policies
--   Structured schemas
+* Declarative Context manifests
+* Explicit inputs and outputs
+* Explicit mounts
+* Explicit policies
+* Structured schemas
 
-### 3. Least‑Privilege Execution
+## 3. Least-Privilege Execution
 
-Agents should only access what they need.
+Orchestrators and executors should only access what they need.
 
-Security boundaries exist at the **executor level**, not the global
-context.
+Security boundaries exist at the object level, not just globally.
 
-### 4. Multi‑Agent Orchestration
+## 4. Hierarchical Orchestration
 
-Contexts allow **multiple specialized agents** to collaborate.
+ECP supports orchestration at multiple levels.
 
-ECP standardizes orchestration strategies such as:
+An orchestrator may contain executors, and nested orchestrators may themselves contain deeper executors or orchestrators.
 
--   Single executor
--   Controller‑specialist
--   Map‑reduce
--   Hierarchical delegation
+This allows:
 
-### 5. Progressive Context Hydration
+* simple single-layer runs
+* delegated specialist execution
+* deep orchestration trees
+* recursive execution patterns
 
-To prevent large context windows and cost explosions, ECP uses staged
-mounts:
+## 5. Progressive Context Hydration
 
-  Stage   Purpose
-  ------- ----------------------------
-  Seed    Metadata and references
-  Focus   Selected objects
-  Deep    Full documents or payloads
+To prevent large context windows and cost explosions, ECP uses staged mounts.
+
+| Stage | Purpose                    |
+| ----- | -------------------------- |
+| Seed  | Metadata and references    |
+| Focus | Selected objects           |
+| Deep  | Full documents or payloads |
 
 This pattern prevents unnecessary data loading.
 
-------------------------------------------------------------------------
+---
 
 # Core Concepts
 
@@ -105,228 +105,460 @@ A **Context** is the root execution object in ECP.
 
 A Context contains:
 
--   Inputs
--   Outputs
--   Schemas
--   Triggers
--   Orchestration configuration
--   Executors
+* Inputs
+* Outputs
+* Schemas
+* Triggers
+* Orchestration configuration
+* A top-level orchestrator
 
-Contexts are **portable artifacts** that define a complete agent
-execution environment.
+Contexts are **portable artifacts** that define a complete execution environment.
 
-------------------------------------------------------------------------
+Unlike earlier models where all executors were treated as flat siblings, ECP treats the **orchestrator as the top-level coordinating object**.
 
-## Executors
-
-Executors represent **agent roles**.
-
-Each executor defines:
-
--   Model configuration
--   Protocol implementations
--   Mounts
--   Tool access
--   Security policies
--   Runtime budgets
-
-Executors operate independently and only access data permitted by their
-policies.
-
-------------------------------------------------------------------------
+---
 
 ## Orchestrator
 
-The **orchestrator** is the executor designated as the entry point.
+An **orchestrator** is a top-level execution object responsible for coordinating a Context run.
 
-Responsibilities:
+An orchestrator:
 
--   Produce an execution plan
--   Select which mounts to expand
--   Delegate work to specialists
--   Merge specialist results
--   Produce final output
+* is the entry point of execution
+* contains executors
+* may contain nested orchestrators
+* defines or inherits orchestration strategy
+* coordinates execution and aggregation of results
 
-------------------------------------------------------------------------
+Orchestrators and executors share a common interface pattern for:
 
-## Specialists
+* inputs
+* outputs
+* schema references
 
-Specialist executors perform focused tasks such as analytics or document
-review.
+However, orchestrators add coordination-specific properties such as:
 
-They receive instructions and scoped context from the orchestrator.
+* child executors
+* nested orchestrators
+* execution ordering or delegation semantics
+* aggregation or merge responsibilities
 
-------------------------------------------------------------------------
+An orchestrator may act as:
+
+* planner
+* dispatcher
+* coordinator
+* merger
+
+---
+
+## Executors
+
+Executors represent **execution roles** within an orchestrator.
+
+Executors may represent:
+
+* LLM-powered agents
+* Deterministic tools
+* Human reviewers
+
+Each executor defines:
+
+* executor type
+* inputs
+* outputs
+* optional schema references for inputs and outputs
+* protocol implementations
+* mounts
+* policies
+* runtime budgets
+
+Executors operate independently and only access data permitted by their policies.
+
+---
+
+# Shared Input/Output Model
+
+Orchestrators and executors are the primary top-level sources of action in ECP.
+
+They both support the definition of **inputs** and **outputs** using either:
+
+* **inline schema definitions**, or
+* **schema references**
+
+This means both orchestrators and executors generally follow the same interface pattern for I/O.
+
+## Inputs
+
+Inputs define the structured values an orchestrator or executor expects before execution.
+
+Inputs may be defined:
+
+* inline
+* by reference to a schema in `schemas`
+
+Inputs may represent:
+
+* parameters
+* prior executor outputs
+* orchestrator plan artifacts
+* human-provided values
+* trigger-derived values
+
+## Outputs
+
+Outputs define the structured results an orchestrator or executor produces.
+
+Outputs may be defined:
+
+* inline
+* by reference to a schema in `schemas`
+
+Outputs may represent:
+
+* plans
+* findings
+* action proposals
+* approvals
+* merged artifacts
+* final emitted results
+
+## Common Interface Principle
+
+Orchestrators and executors should be treated as having a **common I/O contract shape**, even if certain properties differ by role.
+
+Examples of differences:
+
+* orchestrators may define child execution graphs
+* executors may define tool/runtime details
+* human executors may have async completion semantics
+
+---
+
+# Executor Types
+
+ECP defines the following executor types:
+
+```ts
+export type ExecutorType = "agent" | "tool" | "human";
+```
+
+## Agent Executor
+
+An **agent executor** represents a full-featured LLM-based agent.
+
+Characteristics:
+
+* Uses a predefined model
+* Has contextual reasoning capabilities
+* Can access mounts for contextual data
+* Can invoke tools via supported protocols (for example MCP)
+* Can participate in delegation and orchestration flows
+
+If an agent defines mounts, it may also gain access to tools exposed through configured protocols.
+
+Agent executors are responsible for planning, reasoning, and generating structured outputs.
+
+## Tool Executor
+
+A **tool executor** represents a deterministic implementation of a tool.
+
+Characteristics:
+
+* Executes deterministic logic
+* Does not involve LLM reasoning
+* Registered directly with the runtime
+* Can be invoked by agents, sequential flows, or orchestrators
+
+Examples include:
+
+* database query executors
+* transformation utilities
+* data processing jobs
+* API integrations
+
+Tool executors provide predictable execution surfaces.
+
+## Human Executor
+
+A **human executor** represents a human-in-the-loop review step.
+
+Characteristics:
+
+* Requires asynchronous approval or input
+* Pauses execution until human interaction occurs
+* May validate or modify outputs
+* Used for governance, safety, or compliance workflows
+
+Typical use cases:
+
+* approving write operations
+* validating agent decisions
+* reviewing generated reports
+
+Human executors allow ECP workflows to integrate real-world decision processes.
+
+---
+
+# Nested Orchestration
+
+ECP supports **deeply nested orchestrator/executor implementations**.
+
+This means:
+
+* A Context has a top-level orchestrator
+* That orchestrator may contain executors
+* Some of those children may themselves be orchestrators
+* Nested orchestrators may contain their own executors or deeper orchestrators
+
+This makes ECP suitable for:
+
+* multi-stage pipelines
+* domain-specialized trees
+* recursive task breakdown
+* mixed human/tool/agent execution hierarchies
+
+A nested orchestrator should generally follow the same interface rules as the top-level orchestrator, including support for inputs and outputs.
+
+---
 
 # Mounts
 
-Mounts define how data is retrieved from external systems using MCP
-tools.
+Mounts define how data is retrieved from external systems using MCP tools or other supported tool protocols.
 
-Mounts run in three stages:
+Mounts run in three stages.
 
-### Seed
+## Seed
 
-Lightweight metadata and Ref objects.
+Seed mounts return lightweight metadata and reference objects.
 
-### Focus
+These are typically "Ref" objects containing identifiers and small summaries.
 
-Expanded data selected by the orchestrator.
+## Focus
 
-### Deep
+Focus mounts expand a subset of objects selected during orchestration.
 
-Full content retrieval for a limited subset.
+These are typically bounded to avoid excessive context growth.
 
-------------------------------------------------------------------------
+## Deep
+
+Deep mounts retrieve full document bodies or large payloads.
+
+These are used sparingly and typically limited to a small number of items.
+
+---
 
 # Ref Objects
 
 Ref objects are lightweight identifiers returned by seed mounts.
 
-Example fields:
+Example fields include:
 
--   id
--   source
--   title
--   updatedAt
--   snippet
+* id
+* source
+* title
+* updatedAt
+* snippet
 
-They allow the orchestrator to reason about data without loading full
-payloads.
+They allow orchestrators and executors to reason about available data without loading full payloads.
 
-------------------------------------------------------------------------
+---
 
 # Policies
 
-Policies define executor‑scoped security controls.
+Policies define object-scoped security controls.
 
-Policies include:
+Policies may include:
 
--   tool access allowlists
--   runtime budgets
--   network restrictions
--   write controls
+* tool access allowlists
+* runtime budgets
+* network restrictions
+* write controls
 
-Default model: **deny everything unless explicitly allowed**.
+The default security model is **deny-by-default**, meaning orchestrators and executors cannot access tools unless explicitly permitted.
 
-------------------------------------------------------------------------
+---
 
 # Protocols
 
-Executors declare protocols they use.
+Orchestrators and executors may declare which protocols they use.
 
 Typical configuration:
 
-agentOrchestration → A2A\
-toolInvocation → MCP
+* `agentOrchestration → A2A`
+* `toolInvocation → MCP`
 
-Future versions may support additional protocol types.
+Future versions may support additional protocol types such as REST, gRPC, or local tool invocation.
 
-------------------------------------------------------------------------
+---
 
 # Orchestration Strategies
 
-ECP standardizes orchestration patterns:
+ECP standardizes the following orchestration strategies.
 
-### Single
+These strategies define how child executors and child orchestrators are scheduled and how work flows between them.
 
-One executor handles everything.
+```ts
+type OrchestrationStrategy =
+  | "single"
+  | "sequential"
+  | "delegate"
+  | "swarm";
+```
 
-### Delegate
+## Single
 
-Orchestrator delegates work to specialists.
+The **single** strategy executes only one action source for the run.
 
-### Swarm
+* No delegation occurs.
+* The object performs planning, reasoning, and output generation.
 
-Work is distributed across many agents and aggregated.
+This strategy is useful for simple contexts or debugging environments.
 
-------------------------------------------------------------------------
+## Sequential
+
+The **sequential** strategy executes multiple child objects in a predefined order.
+
+* Each child runs after the previous one completes.
+* Outputs from one child may become inputs to the next.
+
+This strategy is useful for pipeline-style implementations.
+
+## Delegate
+
+The **delegate** strategy designates an orchestrator that dynamically delegates work to child executors or nested orchestrators.
+
+Typical flow:
+
+1. Orchestrator runs first
+2. Orchestrator generates a plan
+3. Orchestrator delegates tasks to children
+4. Children return structured outputs
+5. Orchestrator merges results
+
+This is the **most common orchestration model** for complex systems.
+
+## Swarm
+
+The **swarm** strategy distributes work across multiple child objects simultaneously.
+
+Characteristics:
+
+* Parallel execution
+* Results aggregated or merged afterward
+* Suitable for large workloads or exploratory reasoning
+
+Examples include:
+
+* analyzing hundreds of documents
+* generating multiple solution candidates
+* distributed research tasks
+
+---
 
 # Triggers
 
 Triggers initiate Context runs.
 
-Examples:
+Examples include:
 
--   schedule
--   webhook
--   manual invocation
--   tool events
+* schedule
+* webhook
+* manual invocation
+* tool events
 
-------------------------------------------------------------------------
+---
 
 # Schemas
 
-Schemas define structured outputs used for planning, validation, and
-automation.
+Schemas define structured inputs and outputs used for planning, validation, and automation.
 
-Executors reference schemas using outputSchemaRef.
+Orchestrators and executors may reference schemas using schema references, or define them inline.
 
-------------------------------------------------------------------------
+Schemas ensure that values are machine-readable and enforce consistent formats.
+
+---
 
 # Inputs
 
-Inputs parameterize reusable contexts similar to environment variables.
+Inputs parameterize reusable contexts and may also be defined at orchestrator and executor level.
 
-------------------------------------------------------------------------
+These inputs may be passed from:
+
+* triggers
+* parent orchestrators
+* prior executor outputs
+* humans
+* runtime bindings
+
+---
 
 # Outputs
 
-Outputs represent final results from a Context run.
+Outputs represent the structured results produced by orchestrators and executors.
 
-These may later map to notifications, artifacts, or tool actions.
+Outputs may eventually map to:
 
-------------------------------------------------------------------------
+* notifications
+* artifact storage
+* tool actions
+* API responses
+* downstream executor inputs
+
+---
 
 # Security Model
 
-Key principles:
+Key principles include:
 
--   Default deny tool access
--   Executor‑scoped policies
--   Write proposal barriers
--   Runtime budgets
--   Auditability
+* Default deny tool access
+* Object-scoped policies
+* Write proposal barriers
+* Runtime budgets
+* Full auditability
+* Explicit human review where required
 
-------------------------------------------------------------------------
+---
 
 # Execution Lifecycle
 
-1.  Trigger fires
-2.  Context loads
-3.  Orchestrator runs
-4.  Seed mounts hydrate
-5.  Plan generated
-6.  Specialists execute
-7.  Focus/deep mounts hydrate
-8.  Results produced
-9.  Orchestrator merges outputs
+1. Trigger fires
+2. Context loads
+3. Top-level orchestrator runs
+4. Seed mounts hydrate
+5. Plan generated (if applicable)
+6. Child executors and nested orchestrators run according to orchestration strategy
+7. Focus/deep mounts hydrate as needed
+8. Results produced
+9. Results aggregated or merged
 10. Final output emitted
 
-------------------------------------------------------------------------
+---
 
 # Relationship to MCP
 
-MCP standardizes tool access.
+MCP standardizes tool interoperability and tool invocation.
 
-ECP orchestrates how agents use those tools.
+ECP orchestrates how orchestrators and executors use those tools during execution.
 
-------------------------------------------------------------------------
+---
 
 # Relationship to A2A
 
-A2A handles agent communication.
+A2A handles communication between agents.
 
-ECP defines the orchestration strategy governing those interactions.
+ECP defines the orchestration strategy governing how orchestrators and executors interact.
 
-------------------------------------------------------------------------
+---
 
 # Future Extensions
 
-Potential roadmap areas:
+Potential roadmap areas include:
 
--   agent discovery registries
--   signed Context manifests
--   cost accounting
--   runtime observability
--   artifact storage protocols
+* agent discovery registries
+* signed Context manifests
+* cost accounting
+* runtime observability
+* artifact storage protocols
+* nested orchestration validation rules
+* async human execution lifecycle standards
