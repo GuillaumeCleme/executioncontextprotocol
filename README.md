@@ -154,7 +154,7 @@ manifest" that defines the whole execution environment.
 
 ECP is not just a spec — it defines an **execution environment**.
 
-```
+```text
 Compute
     ↓
 Models
