@@ -24,6 +24,23 @@ metadata:
   version: 2.0.0
   description: Weekly ecommerce ops context with executor-scoped mounts/policies and orchestrated multi-agent runs
 
+extensions:
+  version: 1.0.0
+  description: Built-in extension registrations for this Context
+  providers:
+    - name: openai
+      kind: model-provider
+      type: builtin
+      version: 0.3.0
+      description: Built-in OpenAI model provider
+    - name: ollama
+      kind: model-provider
+      type: builtin
+      version: 0.3.0
+      description: Built-in Ollama model provider
+  security:
+    allowIds: [openai, ollama]
+
 # -----------------------------------------------------------------------------
 # Inputs: parameterize reusable Contexts (like env vars)
 # -----------------------------------------------------------------------------
@@ -221,7 +238,10 @@ executors:
         version: v1
 
     model:
-      provider: openai
+      provider:
+        name: openai
+        type: builtin
+        version: 0.3.0
       name: gpt-5
 
     # Orchestrator should mostly work from SEED refs to avoid context blow-up
@@ -303,7 +323,10 @@ executors:
         version: v1
 
     model:
-      provider: openai
+      provider:
+        name: openai
+        type: builtin
+        version: 0.3.0
       name: gpt-5
 
     instructions: |
@@ -355,7 +378,10 @@ executors:
         version: v1
 
     model:
-      provider: openai
+      provider:
+        name: openai
+        type: builtin
+        version: 0.3.0
       name: gpt-5
 
     instructions: |
@@ -424,7 +450,10 @@ executors:
         version: v1
 
     model:
-      provider: openai
+      provider:
+        name: openai
+        type: builtin
+        version: 0.3.0
       name: gpt-5
 
     instructions: |

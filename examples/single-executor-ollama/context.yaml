@@ -2,14 +2,14 @@ apiVersion: ecp/v0.3-draft
 kind: Context
 
 metadata:
-  name: hello-world
+  name: hello-world-ollama
   version: 1.0.0
-  description: Minimal single-executor example — summarize a topic
+  description: Minimal single-executor example with Ollama (llama3.2:3b)
 
 extensions:
   version: 1.0.0
   providers:
-    - name: openai
+    - name: ollama
       kind: model-provider
       type: builtin
       version: 0.3.0
@@ -47,10 +47,10 @@ executors:
     type: agent
     model:
       provider:
-        name: openai
+        name: ollama
         type: builtin
         version: 0.3.0
-      name: gpt-4o-mini
+      name: llama3.2:3b
     instructions: |
       You are a concise summarizer.
       Given a topic, produce a JSON object with:

@@ -10,8 +10,10 @@
 import type {
   ECPContext,
   Executor,
+  ExtensionSecurityPolicy,
   MountStage,
 } from "@ecp/spec";
+import type { ExtensionRegistry } from "../extensions/registry.js";
 
 // ---------------------------------------------------------------------------
 // Inputs
@@ -273,4 +275,69 @@ export interface EngineConfig {
 
   /** Enable execution tracing. When set, the engine emits trace spans. */
   trace?: boolean;
+
+  /**
+   * Runtime extension registration and security configuration.
+   */
+  extensions?: ExtensionRuntimeConfig;
+}
+
+/**
+ * Runtime extension controls supplied by the host system.
+ *
+ * @category Engine
+ */
+export interface ExtensionRuntimeConfig {
+  /**
+   * Extension registry used to resolve providers/executors/plugins.
+   */
+  registry?: ExtensionRegistry;
+
+  /**
+   * Extension IDs enabled for this run (e.g. from CLI --enable or system config).
+   * When set, only these extensions may be used. When unset, all providers
+   * declared by the context in extensions.providers are allowed.
+   */
+  enable?: string[];
+
+  /**
+   * Allow-list of extension IDs that may be enabled. When set, config.enable
+   * must be a subset of this list (typically from system config).
+   */
+  allowEnable?: string[];
+
+  /**
+   * System-level extension loading security policy.
+   */
+  security?: ExtensionSecurityPolicy;
+}
+
+/**
+ * System configuration for ECP (e.g. ecp.config.yaml).
+ * Used to allow-list enabled extensions and set system security policy.
+ * Can be loaded from --config path or default locations.
+ *
+ * @category Engine
+ */
+export interface ECPSystemConfig {
+  /**
+   * Extension allow-list and defaults.
+   */
+  extensions?: {
+    /**
+     * Extension IDs that may be enabled at runtime. When set, only these
+     * may appear in the runtime enable list (CLI --enable or config.defaultEnable).
+     */
+    allowEnable?: string[];
+
+    /**
+     * Default extension IDs to enable when CLI does not pass --enable.
+     */
+    defaultEnable?: string[];
+
+    /**
+     * System-level extension security policy.
+     */
+    security?: ExtensionSecurityPolicy;
+  };
 }

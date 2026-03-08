@@ -6,6 +6,15 @@ metadata:
   version: 1.0.0
   description: Controller-specialist example — orchestrate research across two specialists
 
+extensions:
+  version: 1.0.0
+  providers:
+    - name: openai
+      kind: model-provider
+      type: builtin
+      version: 0.3.0
+  security: {}
+
 inputs:
   subject:
     type: string
@@ -110,7 +119,10 @@ executors:
   - name: orchestrator
     type: agent
     model:
-      provider: openai
+      provider:
+        name: openai
+        type: builtin
+        version: 0.3.0
       name: gpt-4o-mini
     instructions: |
       You are a research orchestrator.
@@ -133,7 +145,10 @@ executors:
   - name: technical_analyst
     type: agent
     model:
-      provider: openai
+      provider:
+        name: openai
+        type: builtin
+        version: 0.3.0
       name: gpt-4o-mini
     instructions: |
       You are a technical analyst.
@@ -153,7 +168,10 @@ executors:
   - name: practical_analyst
     type: agent
     model:
-      provider: openai
+      provider:
+        name: openai
+        type: builtin
+        version: 0.3.0
       name: gpt-4o-mini
     instructions: |
       You are a practical applications analyst.
@@ -173,7 +191,10 @@ executors:
   - name: publisher
     type: agent
     model:
-      provider: openai
+      provider:
+        name: openai
+        type: builtin
+        version: 0.3.0
       name: gpt-4o-mini
     instructions: |
       You are a report publisher.

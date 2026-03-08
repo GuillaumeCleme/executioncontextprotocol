@@ -16,7 +16,13 @@ import yaml from "js-yaml";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Ajv = (_Ajv as any).default ?? _Ajv;
 
-import type { ECPContext, Executor, Orchestrator } from "./types/index.js";
+import type {
+  ECPContext,
+  Executor,
+  Orchestrator,
+  ExtensionReference,
+  ExtensionSourceType,
+} from "./types/index.js";
 
 const SCHEMA_PATH = resolve(import.meta.dirname, "../dist/ecp-context.schema.json");
 
@@ -42,6 +48,26 @@ type ExecutionObject = Executor | Orchestrator;
 
 function schemaNameFromRef(ref: string): string {
   return ref.replace(/^#\/schemas\//, "");
+}
+
+function isModelProviderReference(
+  provider: unknown,
+): provider is { name: string; type: ExtensionSourceType; version: string } {
+  if (!provider || typeof provider !== "object") return false;
+  const candidate = provider as Record<string, unknown>;
+  return (
+    typeof candidate.name === "string" &&
+    typeof candidate.type === "string" &&
+    typeof candidate.version === "string"
+  );
+}
+
+function collectDeclaredExtensions(ctx: ECPContext): ExtensionReference[] {
+  return [
+    ...(ctx.extensions?.providers ?? []),
+    ...(ctx.extensions?.executors ?? []),
+    ...(ctx.extensions?.plugins ?? []),
+  ];
 }
 
 function collectExecutionObjects(ctx: ECPContext): {
@@ -106,6 +132,8 @@ function checkStructure(ctx: ECPContext): void {
   const { entrypointName, objects } = collectExecutionObjects(ctx);
   const executorNames = new Set(objects.map((e) => e.name));
   const schemaNames = new Set(Object.keys(ctx.schemas ?? {}));
+  const declaredExtensions = collectDeclaredExtensions(ctx);
+  const declaredExtensionNames = new Set(declaredExtensions.map((ext) => ext.name));
 
   if (objects.length === 0) {
     fail("Context must define at least one execution object (orchestrator/executor).");
@@ -208,6 +236,41 @@ function checkStructure(ctx: ECPContext): void {
   }
   pass("All budget values are >= 1.");
 
+  // Extension declarations and security consistency
+  if (ctx.extensions) {
+    if ((ctx.extensions as unknown as Record<string, unknown>).enable !== undefined) {
+      fail(
+        "extensions.enable is not allowed in Context manifests. Extension enable list is runtime-only (use CLI --enable or system config defaultEnable).",
+      );
+    }
+    if (declaredExtensions.length > 0 && declaredExtensionNames.size !== declaredExtensions.length) {
+      fail("Duplicate extension IDs detected in extensions.providers/executors/plugins.");
+    }
+
+    const providerKindMismatch = (ctx.extensions.providers ?? []).find((ext) => ext.kind !== "model-provider");
+    if (providerKindMismatch) {
+      fail(
+        `extensions.providers entry "${providerKindMismatch.name}" must declare kind "model-provider".`,
+      );
+    }
+
+    const executorKindMismatch = (ctx.extensions.executors ?? []).find((ext) => ext.kind !== "executor");
+    if (executorKindMismatch) {
+      fail(
+        `extensions.executors entry "${executorKindMismatch.name}" must declare kind "executor".`,
+      );
+    }
+
+    const pluginKindMismatch = (ctx.extensions.plugins ?? []).find((ext) => ext.kind !== "plugin");
+    if (pluginKindMismatch) {
+      fail(
+        `extensions.plugins entry "${pluginKindMismatch.name}" must declare kind "plugin".`,
+      );
+    }
+
+    pass(`Context declares ${declaredExtensions.length} unique extension reference(s).`);
+  }
+
   // Output fromSchema must reference a declared schema
   for (const output of ctx.outputs ?? []) {
     if (!output.fromSchema && !output.schema) {
@@ -225,6 +288,46 @@ function checkStructure(ctx: ECPContext): void {
     } else {
       pass(`output "${output.name}" inline schema is valid.`);
     }
+  }
+
+  // Model provider extension refs must resolve to declared providers (when structured refs are used)
+  const providerExtensions = new Set((ctx.extensions?.providers ?? []).map((ext) => ext.name));
+  for (const executor of objects) {
+    const provider = executor.model?.provider;
+    if (!isModelProviderReference(provider)) continue;
+
+    if (providerExtensions.size > 0 && !providerExtensions.has(provider.name)) {
+      fail(
+        `execution object "${executor.name}" references provider "${provider.name}" but it is not declared in extensions.providers.`,
+      );
+    }
+
+    const allowedKinds = new Set(ctx.extensions?.security?.allowKinds ?? []);
+    if (allowedKinds.size > 0 && !allowedKinds.has("model-provider")) {
+      fail(
+        `execution object "${executor.name}" uses a model provider extension but extensions.security.allowKinds does not allow "model-provider".`,
+      );
+    }
+
+    const allowedSourceTypes = new Set(
+      ctx.extensions?.security?.allowSourceTypes ?? ["builtin"],
+    );
+    if (allowedSourceTypes.size > 0 && !allowedSourceTypes.has(provider.type)) {
+      fail(
+        `execution object "${executor.name}" uses provider type "${provider.type}" which is not allowed by extensions.security.allowSourceTypes.`,
+      );
+    }
+
+    const denied = new Set(ctx.extensions?.security?.denyIds ?? []);
+    if (denied.has(provider.name)) {
+      fail(
+        `execution object "${executor.name}" uses provider "${provider.name}" but it is denied by extensions.security.denyIds.`,
+      );
+    }
+
+    pass(
+      `execution object "${executor.name}" provider reference "${provider.name}" is structurally valid.`,
+    );
   }
 }
 
