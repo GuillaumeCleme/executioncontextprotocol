@@ -38,12 +38,7 @@ extensions:
       type: builtin
       version: 0.3.0
       description: Built-in Ollama model provider
-  enable:
-    - openai
   security:
-    enabled: true
-    allowKinds: [model-provider]
-    allowSourceTypes: [builtin]
     allowIds: [openai, ollama]
 
 # -----------------------------------------------------------------------------

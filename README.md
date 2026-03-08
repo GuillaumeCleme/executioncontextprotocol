@@ -177,6 +177,7 @@ The extension registration proposal is documented in
 |---|---|
 | [`spec.yaml`](spec.yaml) | Canonical example Context manifest |
 | [`SPEC.md`](SPEC.md) | Full protocol specification |
+| [`config/`](config/) | Example system config (`ecp.config.example.yaml`) — allow-list extensions and security; use with `--config` or copy to `./ecp.config.yaml` / `~/.ecp/config.yaml` |
 | [`packages/spec/`](packages/spec/) | TypeScript types, JSON Schema, validators |
 | [`packages/runtime/`](packages/runtime/) | Execution engine, providers, protocols |
 | [`packages/cli/`](packages/cli/) | CLI tool (`ecp run` / `ecp validate`) |

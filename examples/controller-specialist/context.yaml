@@ -13,12 +13,7 @@ extensions:
       kind: model-provider
       type: builtin
       version: 0.3.0
-  enable:
-    - openai
-  security:
-    enabled: true
-    allowKinds: [model-provider]
-    allowSourceTypes: [builtin]
+  security: {}
 
 inputs:
   subject:

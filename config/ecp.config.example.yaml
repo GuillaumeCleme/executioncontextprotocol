@@ -1,0 +1,25 @@
+# ECP System Config — example
+#
+# Copy to ecp.config.yaml in the project root, or to ~/.ecp/config.yaml.
+# Load at startup via: ecp run context.yaml --config ecp.config.yaml
+# Or rely on default locations: ./ecp.config.yaml then ~/.ecp/config.yaml
+#
+# Contexts declare which extensions they use (extensions.providers); the
+# runtime decides which of those are enabled via --enable or this config.
+
+extensions:
+  # Allow-list: only these extension IDs may be enabled at runtime.
+  # CLI --enable and defaultEnable must be a subset of this list.
+  allowEnable:
+    - openai
+    - ollama
+
+  # Default extensions to enable when CLI does not pass --enable.
+  defaultEnable:
+    - openai
+
+  # System-level extension security policy (optional).
+  security:
+    allowKinds: [model-provider]
+    allowSourceTypes: [builtin]
+    allowIds: [openai, ollama]

@@ -185,8 +185,7 @@ This is an architectural target, not final schema:
   - `type`: `npm` | `git` | `local`
   - source-specific fields (`package`, `version`, `repo`, `ref`, `path`)
   - `integrity` (optional but recommended)
-- `extensions.enable[]`
-  - extension IDs enabled for this context
+- Extension enable list is **runtime-only** (CLI `--enable` or system config `defaultEnable`). Contexts declare `extensions.providers` but cannot enable extensions themselves; the system/CLI controls which are enabled and can allow-list via system config (`allowEnable`).
 - `extensions.config.<extensionId>`
   - schema-validated config passed to factory/hooks
 

@@ -876,12 +876,6 @@ export class ECPEngine {
   ): void {
     const security = this.getEffectiveExtensionSecurity(context);
 
-    if (security.enabled === false) {
-      throw new Error(
-        `Model provider "${provider.name}" denied: extension loading is disabled.`,
-      );
-    }
-
     if (security.allowKinds?.length && !security.allowKinds.includes("model-provider")) {
       throw new Error(
         `Model provider "${provider.name}" denied: kind "model-provider" is not allowed.`,
@@ -909,11 +903,30 @@ export class ECPEngine {
       );
     }
 
-    const enabled = context.extensions?.enable ?? [];
-    if (enabled.length > 0 && !enabled.includes(provider.name)) {
-      throw new Error(
-        `Model provider "${provider.name}" denied: provider is not enabled in context.extensions.enable.`,
+    const runtimeEnable = this.config.extensions?.enable;
+    const allowEnable = this.config.extensions?.allowEnable;
+    if (allowEnable !== undefined && allowEnable.length > 0) {
+      if (!allowEnable.includes(provider.name)) {
+        throw new Error(
+          `Model provider "${provider.name}" denied: not in system config allow-list (allowEnable).`,
+        );
+      }
+    }
+    if (runtimeEnable !== undefined && runtimeEnable.length > 0) {
+      if (!runtimeEnable.includes(provider.name)) {
+        throw new Error(
+          `Model provider "${provider.name}" denied: provider is not enabled for this run (extensions.enable).`,
+        );
+      }
+    } else {
+      const contextProviderIds = new Set(
+        context.extensions?.providers?.map((p) => p.name) ?? [],
       );
+      if (contextProviderIds.size > 0 && !contextProviderIds.has(provider.name)) {
+        throw new Error(
+          `Model provider "${provider.name}" denied: provider is not declared in context.extensions.providers.`,
+        );
+      }
     }
   }
 
@@ -922,11 +935,18 @@ export class ECPEngine {
   ): ExtensionSecurityPolicy {
     const contextPolicy = context.extensions?.security;
     const systemPolicy = this.config.extensions?.security;
+    const allowKinds = systemPolicy?.allowKinds ?? contextPolicy?.allowKinds;
+    const allowSourceTypes =
+      systemPolicy?.allowSourceTypes ?? contextPolicy?.allowSourceTypes;
     return {
       ...contextPolicy,
       ...systemPolicy,
-      allowKinds: systemPolicy?.allowKinds ?? contextPolicy?.allowKinds,
-      allowSourceTypes: systemPolicy?.allowSourceTypes ?? contextPolicy?.allowSourceTypes,
+      allowKinds,
+      // Default: allow all builtin extensions when not specified
+      allowSourceTypes:
+        allowSourceTypes !== undefined && allowSourceTypes.length > 0
+          ? allowSourceTypes
+          : ["builtin"],
       allowIds: systemPolicy?.allowIds ?? contextPolicy?.allowIds,
       denyIds: systemPolicy?.denyIds ?? contextPolicy?.denyIds,
     };

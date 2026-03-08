@@ -270,22 +270,21 @@ export interface ExtensionReference extends BaseMetadata, Extensible {
 
 /**
  * Runtime security policy for extension loading.
+ * Security is always enabled. Use allowKinds and allowSourceTypes only to
+ * restrict which extension kinds/source types are allowed (default: all builtin allowed).
  *
  * @category Context
  */
 export interface ExtensionSecurityPolicy extends Extensible {
   /**
-   * Whether extension loading is enabled. Defaults to `true` when omitted.
-   */
-  enabled?: boolean;
-
-  /**
    * Extension kinds allowed to load at runtime.
+   * When omitted, all kinds are allowed (default: allow all builtin extensions).
    */
   allowKinds?: ExtensionKind[];
 
   /**
    * Source types allowed to load at runtime.
+   * When omitted, only builtin extensions are allowed.
    */
   allowSourceTypes?: ExtensionSourceType[];
 
@@ -335,12 +334,6 @@ export interface Extensions extends Extensible {
    * Registered plugin extension references.
    */
   plugins?: ExtensionReference[];
-
-  /**
-   * Explicitly enabled extension IDs (`ExtensionReference.name`) for this
-   * Context run.
-   */
-  enable?: string[];
 
   /**
    * Per-extension configuration blobs keyed by extension ID.

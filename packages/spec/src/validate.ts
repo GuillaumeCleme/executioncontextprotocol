@@ -238,15 +238,13 @@ function checkStructure(ctx: ECPContext): void {
 
   // Extension declarations and security consistency
   if (ctx.extensions) {
+    if ((ctx.extensions as Record<string, unknown>).enable !== undefined) {
+      fail(
+        "extensions.enable is not allowed in Context manifests. Extension enable list is runtime-only (use CLI --enable or system config defaultEnable).",
+      );
+    }
     if (declaredExtensions.length > 0 && declaredExtensionNames.size !== declaredExtensions.length) {
       fail("Duplicate extension IDs detected in extensions.providers/executors/plugins.");
-    }
-
-    const enabled = ctx.extensions.enable ?? [];
-    for (const id of enabled) {
-      if (!declaredExtensionNames.has(id)) {
-        fail(`extensions.enable includes "${id}" but no extension with that ID is declared.`);
-      }
     }
 
     const providerKindMismatch = (ctx.extensions.providers ?? []).find((ext) => ext.kind !== "model-provider");
@@ -304,13 +302,6 @@ function checkStructure(ctx: ECPContext): void {
       );
     }
 
-    const enabled = new Set(ctx.extensions?.enable ?? []);
-    if (enabled.size > 0 && !enabled.has(provider.name)) {
-      fail(
-        `execution object "${executor.name}" references provider "${provider.name}" but it is not enabled in extensions.enable.`,
-      );
-    }
-
     const allowedKinds = new Set(ctx.extensions?.security?.allowKinds ?? []);
     if (allowedKinds.size > 0 && !allowedKinds.has("model-provider")) {
       fail(
@@ -318,7 +309,9 @@ function checkStructure(ctx: ECPContext): void {
       );
     }
 
-    const allowedSourceTypes = new Set(ctx.extensions?.security?.allowSourceTypes ?? []);
+    const allowedSourceTypes = new Set(
+      ctx.extensions?.security?.allowSourceTypes ?? ["builtin"],
+    );
     if (allowedSourceTypes.size > 0 && !allowedSourceTypes.has(provider.type)) {
       fail(
         `execution object "${executor.name}" uses provider type "${provider.type}" which is not allowed by extensions.security.allowSourceTypes.`,

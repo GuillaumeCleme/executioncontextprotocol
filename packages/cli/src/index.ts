@@ -14,7 +14,7 @@
 import { parseArgs } from "node:util";
 import { resolve } from "node:path";
 import { readFileSync, existsSync } from "node:fs";
-import { ECPEngine, loadContext, resolveInputs } from "@ecp/runtime";
+import { ECPEngine, loadContext, resolveInputs, resolveSystemConfig } from "@ecp/runtime";
 import type { ModelProvider } from "@ecp/runtime";
 import { MCPToolInvoker } from "@ecp/runtime";
 import { A2AAgentTransport } from "@ecp/runtime";
@@ -38,6 +38,8 @@ interface ParsedArgs {
   traceDir: string;
   model?: string;
   provider: string;
+  enable: string[];
+  configPath: string;
   ollamaBaseUrl: string;
   toolServers: string;
   agentEndpoints: string;
@@ -84,14 +86,16 @@ Options:
   --input, -i <key=value>    Set an input value (repeatable)
   --model, -m <model>        Override the default model (e.g. gpt-4o-mini)
   --provider, -p <name>      Model provider: openai (default) or ollama
-  --ollama-base-url <url>    Ollama server URL (default: http://localhost:11434)
-  --trace, -t                Enable tracing (saves to ./traces/<run_id>.json)
-  --trace-dir <dir>          Directory for trace files (default: ./traces)
+  --enable, -e <id>         Extension(s) to enable for this run (repeatable or comma-separated). Overrides system config defaultEnable.
+  --config, -c <path>        Path to system config (ecp.config.yaml). Default: ./ecp.config.yaml then ~/.ecp/config.yaml
+  --ollama-base-url <url>   Ollama server URL (default: http://localhost:11434)
+  --trace, -t               Enable tracing (saves to ./traces/<run_id>.json)
+  --trace-dir <dir>         Directory for trace files (default: ./traces)
   --extension-security <json> JSON security policy for extension loading
-  --tool-servers <json>      JSON map of tool server configs
-  --agent-endpoints <json>   JSON map of agent endpoints
-  --debug, -d                Enable debug logging
-  --help, -h                 Show this help message
+  --tool-servers <json>     JSON map of tool server configs
+  --agent-endpoints <json>  JSON map of agent endpoints
+  --debug, -d               Enable debug logging
+  --help, -h                Show this help message
 
 Examples:
   ecp run spec.yaml --input shopifyStoreId=store-123 --trace
@@ -107,6 +111,8 @@ function parseCliArgs(): ParsedArgs {
       input: { type: "string", short: "i", multiple: true },
       model: { type: "string", short: "m" },
       provider: { type: "string", short: "p", default: "openai" },
+      enable: { type: "string", short: "e", multiple: true },
+      config: { type: "string", short: "c" },
       "ollama-base-url": { type: "string", default: "http://localhost:11434" },
       trace: { type: "boolean", short: "t", default: false },
       "trace-dir": { type: "string", default: "./traces" },
@@ -117,6 +123,12 @@ function parseCliArgs(): ParsedArgs {
       "extension-security": { type: "string", default: "" },
     },
   });
+
+  const enableRaw = (values.enable as string[] | undefined) ?? [];
+  const enable: string[] = [];
+  for (const v of enableRaw) {
+    enable.push(...v.split(",").map((s) => s.trim()).filter(Boolean));
+  }
 
   if (values.help || positionals.length === 0) {
     printUsage();
@@ -153,6 +165,8 @@ function parseCliArgs(): ParsedArgs {
     traceDir: (values["trace-dir"] as string) ?? "./traces",
     model: values.model as string | undefined,
     provider: (values.provider as string) ?? "openai",
+    enable,
+    configPath: (values.config as string) ?? "",
     ollamaBaseUrl: (values["ollama-base-url"] as string) ?? "http://localhost:11434",
     toolServers: (values["tool-servers"] as string) ?? "",
     agentEndpoints: (values["agent-endpoints"] as string) ?? "",
@@ -184,6 +198,27 @@ async function runExecute(args: ParsedArgs): Promise<void> {
   console.log(`\n  Running: ${args.contextPath}\n`);
 
   const context = loadContext(args.contextPath);
+  const cwd = process.cwd();
+  const systemConfig = resolveSystemConfig(
+    args.configPath || undefined,
+    cwd,
+  );
+
+  const enableFromCli = args.enable.length > 0
+    ? args.enable
+    : systemConfig?.extensions?.defaultEnable ?? [args.provider];
+  const allowEnable = systemConfig?.extensions?.allowEnable;
+  if (allowEnable !== undefined && allowEnable.length > 0) {
+    for (const id of enableFromCli) {
+      if (!allowEnable.includes(id)) {
+        console.error(
+          `\n  Extension "${id}" is not in system config allowEnable. Allowed: ${allowEnable.join(", ")}\n`,
+        );
+        process.exit(1);
+      }
+    }
+  }
+
   const registry = new ExtensionRegistry();
   registerBuiltinModelProviders(registry, {
     version: "0.3.0",
@@ -220,7 +255,7 @@ async function runExecute(args: ParsedArgs): Promise<void> {
 
   const extensionSecurity = args.extensionSecurity
     ? JSON.parse(args.extensionSecurity) as ExtensionSecurityPolicy
-    : undefined;
+    : (systemConfig?.extensions?.security ?? context.extensions?.security);
 
   const engine = new ECPEngine(modelProvider, toolInvoker, agentTransport, {
     toolServers,
@@ -231,7 +266,9 @@ async function runExecute(args: ParsedArgs): Promise<void> {
     trace: args.trace,
     extensions: {
       registry,
-      security: extensionSecurity ?? context.extensions?.security,
+      enable: enableFromCli,
+      allowEnable: systemConfig?.extensions?.allowEnable,
+      security: extensionSecurity,
     },
   });
 

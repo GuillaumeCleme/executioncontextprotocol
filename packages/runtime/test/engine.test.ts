@@ -295,12 +295,7 @@ function makeExtensibleContext(providerName: string): ECPContext {
           version: "1.0.0",
         },
       ],
-      enable: [providerName],
-      security: {
-        enabled: true,
-        allowKinds: ["model-provider"],
-        allowSourceTypes: ["builtin"],
-      },
+      security: {},
     },
     executors: [
       {
@@ -341,6 +336,7 @@ describe("ECPEngine — extensibility registry", () => {
     const engine = new ECPEngine(fallbackModel, tools, transport, {
       extensions: {
         registry,
+        enable: ["provider-a"],
       },
     });
 
@@ -373,8 +369,8 @@ describe("ECPEngine — extensibility registry", () => {
     const engine = new ECPEngine(fallbackModel, tools, transport, {
       extensions: {
         registry,
+        enable: ["provider-a"],
         security: {
-          enabled: true,
           allowSourceTypes: ["npm"],
         },
       },
