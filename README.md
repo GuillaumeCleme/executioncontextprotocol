@@ -24,6 +24,32 @@ Think of ECP as:
 
 ------------------------------------------------------------------------
 
+## Getting Started
+
+**Prerequisites:** Node.js 18+, npm or pnpm. For OpenAI: set `OPENAI_API_KEY`. For Ollama: [install Ollama](https://ollama.com/) and run it locally.
+
+```bash
+git clone https://github.com/GuillaumeCleme/executioncontextprotocol.git
+cd executioncontextprotocol
+npm install   # or pnpm install
+```
+
+**Run an example:**
+
+```bash
+npx tsx packages/cli/src/index.ts run examples/single-executor/context.yaml --enable openai -i topic="ECP"
+```
+
+**Validate a Context:**
+
+```bash
+npx tsx packages/cli/src/index.ts validate examples/single-executor/context.yaml
+```
+
+**Full setup guide:** [SETUP.md](SETUP.md) — global CLI install, Ollama, environment variables, system config (`ecp.config.yaml`), and docs.
+
+------------------------------------------------------------------------
+
 ## Why ECP Exists
 
 There is a gap in the stack:
@@ -331,6 +357,7 @@ See [`examples/single-executor/context.yaml`](examples/single-executor/context.y
 |---|---|
 | [`spec.yaml`](spec.yaml) | Canonical example Context manifest |
 | [`SPEC.md`](SPEC.md) | Full protocol specification |
+| **[`SETUP.md`](SETUP.md)** | **Setup guide: install, CLI (global), env vars, Ollama, system config, docs** |
 | [`config/`](config/) | Example system config (`ecp.config.example.yaml`) — allow-list extensions and security; use with `--config` or copy to `./ecp.config.yaml` / `~/.ecp/config.yaml` |
 | [`packages/spec/`](packages/spec/) | TypeScript types, JSON Schema, validators |
 | [`packages/runtime/`](packages/runtime/) | Execution engine, providers, protocols |

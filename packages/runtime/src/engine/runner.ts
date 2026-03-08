@@ -343,7 +343,7 @@ export class ECPEngine {
       executorName: executor.name,
     });
 
-    const messages = this.buildMessages(executor, executorState, taskOverride);
+    const messages = this.buildMessages(executor, executorState, state.inputs, taskOverride);
     const tools = await this.getAvailableTools(executor, modelProvider, enforcer, state);
 
     const model = this.config.modelOverride ?? executor.model?.name ?? this.config.defaultModel ?? "gpt-4o";
@@ -607,6 +607,7 @@ export class ECPEngine {
   private buildMessages(
     executor: Executor,
     executorState: ExecutorState,
+    inputs: ResolvedInputs,
     taskOverride?: string,
   ): ChatMessage[] {
     const messages: ChatMessage[] = [];
@@ -623,9 +624,14 @@ export class ECPEngine {
       .map((m) => `## ${m.mountName} (${m.stage}, ${m.itemCount} items)\n${JSON.stringify(m.data, null, 2)}`)
       .join("\n\n");
 
+    const inputsBlock =
+      Object.keys(inputs).length > 0
+        ? `Context inputs:\n${JSON.stringify(inputs, null, 2)}\n\n`
+        : "";
+
     const userContent = taskOverride
-      ? `Task: ${taskOverride}\n\nAvailable data:\n${mountContext}`
-      : `Execute your role using the following data:\n\n${mountContext}`;
+      ? `Task: ${taskOverride}\n\n${inputsBlock}Available data:\n${mountContext}`
+      : `${inputsBlock}Execute your role using the following data:\n\n${mountContext}`.trim();
 
     messages.push({
       role: "user",
