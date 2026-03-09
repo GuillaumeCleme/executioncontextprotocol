@@ -177,6 +177,72 @@ Executors operate independently and only access data permitted by their policies
 
 ---
 
+# Runtime Behavior: Orchestrator vs Executor
+
+The following describes how the orchestrator and executors behave in the current runtime implementation: what is shared, what is not, and the security implications.
+
+## Same Execution Path
+
+There is no separate "orchestrator runtime." The orchestrator is the **entrypoint** execution object. All execution objects (the top-level orchestrator and every executor) are:
+
+* Collected into a single flat list and stored in the same run state
+* Run through the **same** execution path: same message builder, mounts, policies, model, and tools
+
+So **orchestrator vs executor is a role and ordering distinction**, not a different execution pipeline. The entrypoint is chosen from the context (e.g. `orchestration.entrypoint` or `orchestrator.name`).
+
+## Behavioral Difference in Delegate Flows
+
+When the strategy is delegate (or sequential/swarm):
+
+1. The **entrypoint** runs first. Its output is treated as the **plan**: the runtime parses `plan.delegate` to decide which specialists run and with which `task` string.
+2. That plan is passed into **mount hydration** for specialists (focus and deep stages). It drives *which* data is loaded (e.g. selected IDs), not as a literal "orchestrator context" blob in every prompt.
+3. **Specialists** run with: context inputs, the task string, and their own mount outputs (hydrated using the plan).
+4. The **merger** (the executor whose `outputSchemaRef` matches `orchestration.produces`) runs last and receives **all** prior outputs via a synthetic `__prior_outputs` mount, including the orchestrator plan and every specialist output.
+
+So the orchestrator's output is **not** broadcast to every executor; only the engine and the merger see it (the merger as part of the full prior-outputs blob).
+
+## What Is Shared
+
+| What | Shared with all executors? | Notes |
+|------|----------------------------|--------|
+| **Context inputs** | Yes | Resolved once per run; every execution object receives the same `state.inputs` in its prompt (e.g. "Context inputs: ..."). |
+| **Orchestrator output (plan)** | No | Used by the engine for control flow and mount selection. Only the merger sees it, inside `__prior_outputs`. |
+| **Prior executor outputs** | Only to merger | The merger receives a single synthetic mount containing every completed executor's full output. |
+
+## Data Flow Diagram
+
+```mermaid
+flowchart TB
+  subgraph shared [Shared run params]
+    ContextInputs[Context inputs]
+  end
+  subgraph engine [Engine]
+    Entrypoint[Entrypoint orchestrator]
+    Plan[Plan delegate array]
+    Hydrate[Focus and deep mount hydration]
+    Specialists[Specialists]
+    Merger[Merger]
+  end
+  ContextInputs --> Entrypoint
+  ContextInputs --> Specialists
+  ContextInputs --> Merger
+  Entrypoint -->|output| Plan
+  Plan --> Hydrate
+  Plan -->|task per delegation| Specialists
+  Hydrate -->|mount data| Specialists
+  Specialists -->|outputs| PriorOutputs[Prior outputs blob]
+  Entrypoint -->|output| PriorOutputs
+  PriorOutputs -->|synthetic mount __prior_outputs| Merger
+```
+
+## Security Implications
+
+* **Context inputs**: Because they are shared with **every** executor, any sensitive run parameters (PII, API keys, tenant IDs) are visible to all. If the manifest contains inputs that should be restricted to specific executors, the current design **can violate least-privilege**; there is no per-executor input filtering today.
+* **Orchestrator output**: Not shared with all executors; used only for control flow and mount selection, and visible to the merger. So "orchestrator context" in the sense of the plan is not a broad sharing concern.
+* **Prior outputs**: Only the merger sees them, but it sees **all** executor outputs in full. So the merger has broad visibility; schema-based handoffs (passing only declared shapes to consumers) would improve least-privilege for inter-executor data.
+
+---
+
 # Shared Input/Output Model
 
 Orchestrators and executors are the primary top-level sources of action in ECP.
