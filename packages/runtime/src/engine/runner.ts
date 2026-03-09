@@ -691,10 +691,17 @@ export class ECPEngine {
   }
 
   private async emitProgress(_state: RunState, event: ExecutionProgressEvent): Promise<void> {
-    try {
-      await this.config.onProgress?.(event);
-    } catch {
-      // Ignore progress callback errors so they do not break the run.
+    const callbacks = this.config.onProgress
+      ? Array.isArray(this.config.onProgress)
+        ? this.config.onProgress
+        : [this.config.onProgress]
+      : [];
+    for (const cb of callbacks) {
+      try {
+        await cb(event);
+      } catch {
+        // Ignore progress callback errors so they do not break the run.
+      }
     }
   }
 

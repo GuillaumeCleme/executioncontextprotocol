@@ -332,9 +332,9 @@ export interface EngineConfig {
 
   /**
    * Optional callback for real-time execution progress (phase, steps, reasoning).
-   * Used by the CLI to show a spinner and step-by-step completion.
+   * May be a single callback or an array; all are invoked for each event.
    */
-  onProgress?: ProgressCallback;
+  onProgress?: ProgressCallback | ProgressCallback[];
 
   /**
    * Runtime extension registration and security configuration.
@@ -399,5 +399,26 @@ export interface ECPSystemConfig {
      * System-level extension security policy.
      */
     security?: ExtensionSecurityPolicy;
+  };
+
+  /**
+   * Progress logger extensions: which loggers to enable and their config.
+   * Loggers receive the same progress events as the CLI (phase, steps, reasoning).
+   */
+  progressLoggers?: {
+    /**
+     * Default progress logger IDs to enable (e.g. ["file"]).
+     */
+    defaultEnable?: string[];
+
+    /**
+     * Allow-list of progress logger IDs. When set, only these may be enabled.
+     */
+    allowEnable?: string[];
+
+    /**
+     * Per-logger configuration, keyed by logger ID.
+     */
+    config?: Record<string, Record<string, unknown>>;
   };
 }

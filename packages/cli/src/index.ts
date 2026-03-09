@@ -16,10 +16,10 @@ import { resolve } from "node:path";
 import { readFileSync, existsSync } from "node:fs";
 import ora from "ora";
 import { ECPEngine, loadContext, resolveInputs, resolveSystemConfig } from "@ecp/runtime";
-import type { ModelProvider, ExecutionProgressEvent } from "@ecp/runtime";
+import type { ModelProvider, ExecutionProgressEvent, ProgressCallback } from "@ecp/runtime";
 import { MCPToolInvoker } from "@ecp/runtime";
 import { A2AAgentTransport } from "@ecp/runtime";
-import { ExtensionRegistry, registerBuiltinModelProviders } from "@ecp/runtime";
+import { ExtensionRegistry, registerBuiltinModelProviders, registerBuiltinProgressLoggers } from "@ecp/runtime";
 import {
   TraceCollector,
   ConsoleTraceExporter,
@@ -45,6 +45,7 @@ interface ParsedArgs {
   toolServers: string;
   agentEndpoints: string;
   extensionSecurity: string;
+  progressLogger: string[];
 }
 
 function collectExecutionObjectNames(context: ECPContext): string[] {
@@ -219,6 +220,7 @@ Options:
   --ollama-base-url <url>   Ollama server URL (default: http://localhost:11434)
   --trace, -t               Enable tracing (saves to ./traces/<run_id>.json)
   --trace-dir <dir>         Directory for trace files (default: ./traces)
+  --progress-logger <id>    Enable a progress logger (e.g. file). Repeatable. Uses config from ~/.ecp/config.yaml
   --extension-security <json> JSON security policy for extension loading
   --tool-servers <json>     JSON map of tool server configs
   --agent-endpoints <json>  JSON map of agent endpoints
@@ -244,6 +246,7 @@ function parseCliArgs(): ParsedArgs {
       "ollama-base-url": { type: "string", default: "http://localhost:11434" },
       trace: { type: "boolean", short: "t", default: false },
       "trace-dir": { type: "string", default: "./traces" },
+      "progress-logger": { type: "string", short: "l", multiple: true },
       debug: { type: "boolean", short: "d", default: false },
       help: { type: "boolean", short: "h", default: false },
       "tool-servers": { type: "string", default: "" },
@@ -299,6 +302,9 @@ function parseCliArgs(): ParsedArgs {
     toolServers: (values["tool-servers"] as string) ?? "",
     agentEndpoints: (values["agent-endpoints"] as string) ?? "",
     extensionSecurity: (values["extension-security"] as string) ?? "",
+    progressLogger: ((values["progress-logger"] as string[] | undefined) ?? []).flatMap((v) =>
+      v.split(",").map((s) => s.trim()).filter(Boolean),
+    ),
   };
 }
 
@@ -356,6 +362,10 @@ async function runExecute(args: ParsedArgs): Promise<void> {
       defaultModel: args.model,
     },
   });
+  registerBuiltinProgressLoggers(registry, {
+    version: "0.3.0",
+    file: {},
+  });
   registry.lock();
 
   let modelProvider: ModelProvider;
@@ -383,10 +393,41 @@ async function runExecute(args: ParsedArgs): Promise<void> {
     ? JSON.parse(args.extensionSecurity) as ExtensionSecurityPolicy
     : (systemConfig?.extensions?.security ?? context.extensions?.security);
 
+  const progressLoggerCallbacks: ProgressCallback[] = [];
+  const plConfig = systemConfig?.progressLoggers;
+  const plEnable =
+    args.progressLogger.length > 0 ? args.progressLogger : plConfig?.defaultEnable ?? [];
+  const plAllow = plConfig?.allowEnable;
+  if (plAllow !== undefined && plAllow.length > 0) {
+    for (const id of plEnable) {
+      if (!plAllow.includes(id)) {
+        console.error(
+          `\n  Progress logger "${id}" is not in system config progressLoggers.allowEnable. Allowed: ${plAllow.join(", ")}\n`,
+        );
+        process.exit(1);
+      }
+    }
+  }
+  for (const id of plEnable) {
+    try {
+      const cb = registry.createProgressLogger(id, plConfig?.config?.[id]);
+      progressLoggerCallbacks.push(cb);
+    } catch (err) {
+      console.error(
+        `\n  Failed to create progress logger "${id}": ${err instanceof Error ? err.message : String(err)}\n`,
+      );
+      process.exit(1);
+    }
+  }
+
   const spinner = args.debug ? undefined : ora({ stream: process.stderr }).start("Loading context...");
-  const onProgress = spinner
+  const builtInProgress = spinner
     ? createProgressHandler(spinner, args.contextPath, context.metadata.name)
     : undefined;
+  const onProgress: ProgressCallback | ProgressCallback[] | undefined =
+    builtInProgress && progressLoggerCallbacks.length > 0
+      ? [builtInProgress, ...progressLoggerCallbacks]
+      : builtInProgress ?? (progressLoggerCallbacks.length > 0 ? progressLoggerCallbacks : undefined);
 
   if (args.debug) {
     console.log(`\n  Running: ${args.contextPath}\n`);
