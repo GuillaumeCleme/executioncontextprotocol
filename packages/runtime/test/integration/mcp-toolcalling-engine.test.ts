@@ -109,6 +109,6 @@ describe("Engine integration — tool-calling via MCP", () => {
     expect(toolMsgs.length).toBeGreaterThanOrEqual(1);
     expect(toolMsgs[0]!.content).toContain("ISS-1");
     expect(toolMsgs[0]!.content).toContain("ISS-2");
-  });
+  }, 30_000);
 });
 

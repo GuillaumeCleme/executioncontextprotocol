@@ -19,7 +19,8 @@ node packages/cli/dist/index.js run examples/ollama-mcp-tools/context-fetch-tool
   --provider ollama ^
   --model llama3.2:3b ^
   --input url=https://example.com ^
-  --tool-servers "{\"fetch\":{\"transport\":{\"type\":\"stdio\",\"command\":\"docker\",\"args\":[\"run\",\"-i\",\"--rm\",\"mcp/fetch\"]}}}"
+  --tool-server fetch=stdio:docker,run,-i,--rm,mcp/fetch ^
+  --tool-allow web_summarizer=fetch:fetch
 ```
 
 Notes:
@@ -36,6 +37,6 @@ node packages/cli/dist/index.js run examples/ollama-mcp-tools/context-fake-jira-
   --provider ollama ^
   --model llama3.2:3b ^
   --input project=OPS ^
-  --tool-servers "{\"test-jira\":{\"transport\":{\"type\":\"stdio\",\"command\":\"npx\",\"args\":[\"tsx\",\"examples/ollama-mcp-tools/servers/fake-mcp-server.ts\"]}}}"
+  --tool-server test-jira=stdio:npx,tsx,examples/ollama-mcp-tools/servers/fake-mcp-server.ts
 ```
 

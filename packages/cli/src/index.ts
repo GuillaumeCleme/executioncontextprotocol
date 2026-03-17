@@ -30,6 +30,7 @@ import {
 import type { ExecutionTrace } from "@ecp/runtime";
 import type { MemoryStoreLike } from "@ecp/runtime";
 import type { ECPContext, ExtensionSecurityPolicy, Orchestrator } from "@ecp/spec";
+import { extractToolServerSpecsFromArgv, parseToolServerSpecs } from "./tool-servers.js";
 
 interface ParsedArgs {
   command: string;
@@ -43,7 +44,8 @@ interface ParsedArgs {
   enable: string[];
   configPath: string;
   ollamaBaseUrl: string;
-  toolServers: string;
+  toolServer: string[];
+  toolAllow: string[];
   agentEndpoints: string;
   extensionSecurity: string;
   progressLogger: string[];
@@ -73,6 +75,67 @@ function collectExecutionObjectNames(context: ECPContext): string[] {
   }
 
   return [...names];
+}
+
+function listAllExecutors(context: ECPContext): Array<{
+  name: string;
+  executor: Orchestrator["executors"] extends Array<infer T> ? T : never;
+}> {
+  const out: Array<{ name: string; executor: any }> = [];
+  const visit = (o: Orchestrator): void => {
+    out.push({ name: o.name, executor: o });
+    for (const e of o.executors ?? []) out.push({ name: e.name, executor: e });
+    for (const child of o.orchestrators ?? []) visit(child);
+  };
+  if (context.orchestrator) visit(context.orchestrator);
+  for (const e of context.executors ?? []) out.push({ name: e.name, executor: e });
+  return out;
+}
+
+function applyToolAllowFlags(context: ECPContext, raw: string[]): void {
+  if (!raw.length) return;
+
+  const executors = listAllExecutors(context);
+  const byName = new Map(executors.map((e) => [e.name, e.executor]));
+
+  for (const entry of raw) {
+    const eqIdx = entry.indexOf("=");
+    if (eqIdx === -1) {
+      throw new Error(
+        `Invalid --tool-allow value "${entry}" (expected executor=server:tool[,server:tool...])`,
+      );
+    }
+    const executorName = entry.slice(0, eqIdx).trim();
+    const toolsRaw = entry.slice(eqIdx + 1).trim();
+    const toolRefs = toolsRaw
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    if (!executorName || toolRefs.length === 0) {
+      throw new Error(
+        `Invalid --tool-allow value "${entry}" (expected executor=server:tool[,server:tool...])`,
+      );
+    }
+
+    const executor = byName.get(executorName);
+    if (!executor) {
+      const known = [...byName.keys()].sort().join(", ");
+      throw new Error(
+        `Unknown executor "${executorName}" in --tool-allow. Known executors: ${known}`,
+      );
+    }
+
+    executor.policies ??= {};
+    executor.policies.toolAccess ??= { default: "deny" };
+
+    // Enforce deny-by-default when using CLI allow-lists.
+    executor.policies.toolAccess.default = "deny";
+
+    const existing = new Set(executor.policies.toolAccess.allow ?? []);
+    for (const t of toolRefs) existing.add(t);
+    executor.policies.toolAccess.allow = [...existing];
+  }
 }
 
 function contextHasMemory(context: ECPContext): boolean {
@@ -238,21 +301,29 @@ Options:
   --trace-dir <dir>         Directory for trace files (default: ./traces)
   --progress-logger <id>    Enable a progress logger (e.g. file). Repeatable. Uses config from ~/.ecp/config.yaml
   --extension-security <json> JSON security policy for extension loading
-  --tool-servers <json>     JSON map of tool server configs
+  --tool-server <spec>      Tool server (repeatable). Format:
+                            name=stdio:command[,arg1,arg2...]  OR  name=sse:url
+                            OR grouped: --tool-server <name> --tool-server-type stdio --tool-server-command <cmd> --tool-server-arg <arg> ...
+  --tool-allow <spec>       Allow tool(s) for an executor (repeatable). Format:
+                            executor=server:tool[,server:tool...]
   --agent-endpoints <json>  JSON map of agent endpoints
   --debug, -d               Enable debug logging
   --help, -h                Show this help message
 
 Examples:
   ecp run spec.yaml --input shopifyStoreId=store-123 --trace
+  ecp run ctx.yaml --tool-allow orchestrator=fetch:fetch --tool-allow writer=fetch:fetch
+  ecp run ctx.yaml --tool-server fetch=stdio:docker,run,-i,--rm,mcp/fetch --tool-allow web_summarizer=fetch:fetch
   ecp trace run-1234567890-abc123
   ecp graph run-1234567890-abc123
 `);
 }
 
 function parseCliArgs(): ParsedArgs {
+  const extracted = extractToolServerSpecsFromArgv(process.argv.slice(2));
   const { values, positionals } = parseArgs({
     allowPositionals: true,
+    args: extracted.argv,
     options: {
       input: { type: "string", short: "i", multiple: true },
       model: { type: "string", short: "m" },
@@ -265,7 +336,14 @@ function parseCliArgs(): ParsedArgs {
       "progress-logger": { type: "string", short: "l", multiple: true },
       debug: { type: "boolean", short: "d", default: false },
       help: { type: "boolean", short: "h", default: false },
-      "tool-servers": { type: "string", default: "" },
+      "tool-server": { type: "string", multiple: true },
+      "tool-server-type": { type: "string" },
+      "tool-server-command": { type: "string" },
+      "tool-server-url": { type: "string" },
+      "tool-server-arg": { type: "string", multiple: true },
+      "tool-server-env": { type: "string", multiple: true },
+      "tool-server-cwd": { type: "string" },
+      "tool-allow": { type: "string", multiple: true },
       "agent-endpoints": { type: "string", default: "" },
       "extension-security": { type: "string", default: "" },
     },
@@ -315,7 +393,12 @@ function parseCliArgs(): ParsedArgs {
     enable,
     configPath: (values.config as string) ?? "",
     ollamaBaseUrl: (values["ollama-base-url"] as string) ?? "http://localhost:11434",
-    toolServers: (values["tool-servers"] as string) ?? "",
+    toolServer: ((values["tool-server"] as string[] | undefined) ?? []).flatMap((v) =>
+      v.split(";").map((s) => s.trim()).filter(Boolean),
+    ).concat(extracted.specs),
+    toolAllow: ((values["tool-allow"] as string[] | undefined) ?? []).flatMap((v) =>
+      v.split(";").map((s) => s.trim()).filter(Boolean),
+    ),
     agentEndpoints: (values["agent-endpoints"] as string) ?? "",
     extensionSecurity: (values["extension-security"] as string) ?? "",
     progressLogger: ((values["progress-logger"] as string[] | undefined) ?? []).flatMap((v) =>
@@ -346,6 +429,7 @@ async function runValidate(args: ParsedArgs): Promise<void> {
 
 async function runExecute(args: ParsedArgs): Promise<void> {
   const context = loadContext(args.contextPath);
+  applyToolAllowFlags(context, args.toolAllow);
   const cwd = process.cwd();
   const systemConfig = resolveSystemConfig(
     args.configPath || undefined,
@@ -398,9 +482,14 @@ async function runExecute(args: ParsedArgs): Promise<void> {
   const toolInvoker = new MCPToolInvoker();
   const agentTransport = new A2AAgentTransport();
 
-  const toolServers = args.toolServers
-    ? JSON.parse(args.toolServers) as Record<string, { transport: Record<string, unknown> }>
-    : undefined;
+  let toolServers: Record<string, { transport: Record<string, unknown> }> | undefined;
+  try {
+    const fromSpecs = args.toolServer.length > 0 ? parseToolServerSpecs(args.toolServer) : {};
+    toolServers = Object.keys(fromSpecs).length > 0 ? fromSpecs : undefined;
+  } catch (err) {
+    console.error(`\n  Invalid tool server configuration: ${err instanceof Error ? err.message : String(err)}\n`);
+    process.exit(1);
+  }
 
   const agentEndpoints = args.agentEndpoints
     ? JSON.parse(args.agentEndpoints) as Record<string, string>
