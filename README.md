@@ -1,7 +1,6 @@
 # Execution Control Protocol (ECP)
 
 [![CI](https://github.com/GuillaumeCleme/executioncontextprotocol/actions/workflows/ci.yml/badge.svg)](https://github.com/GuillaumeCleme/executioncontextprotocol/actions/workflows/ci.yml)
-[![Docs](https://github.com/GuillaumeCleme/executioncontextprotocol/actions/workflows/docs.yml/badge.svg)](https://guillaumecleme.github.io/executioncontextprotocol/)
 
 > **The runtime specification for agentic systems.**
 
