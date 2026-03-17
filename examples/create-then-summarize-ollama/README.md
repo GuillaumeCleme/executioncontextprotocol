@@ -9,17 +9,11 @@ Two sequential Ollama calls:
 ## Run
 
 ```bash
-npx tsx packages/cli/src/index.ts run examples/create-then-summarize-ollama/context.yaml --provider ollama --enable ollama --model llama3.2:3b -i topic="Your topic here"
-```
-
-With a global `ecp`:
-
-```bash
 ecp run examples/create-then-summarize-ollama/context.yaml --provider ollama --enable ollama --model llama3.2:3b -i topic="Your topic here"
 ```
 
 ## Example
 
 ```bash
-npx tsx packages/cli/src/index.ts run examples/create-then-summarize-ollama/context.yaml --provider ollama --enable ollama --model llama3.2:3b -i topic="Benefits of local AI models"
+ecp run examples/create-then-summarize-ollama/context.yaml --provider ollama --enable ollama --model llama3.2:3b -i topic="Benefits of local AI models"
 ```

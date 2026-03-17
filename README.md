@@ -33,16 +33,25 @@ cd executioncontextprotocol
 npm install   # or pnpm install
 ```
 
+**Install the CLI (recommended):**
+
+```bash
+npm install -g tsx
+cd packages/cli
+npm link
+cd ../..
+```
+
 **Run an example:**
 
 ```bash
-npx tsx packages/cli/src/index.ts run examples/single-executor/context.yaml --enable openai -i topic="ECP"
+ecp run examples/single-executor/context.yaml --enable openai -i topic="ECP"
 ```
 
 **Validate a Context:**
 
 ```bash
-npx tsx packages/cli/src/index.ts validate examples/single-executor/context.yaml
+ecp validate examples/single-executor/context.yaml
 ```
 
 **Full setup guide:** [SETUP.md](SETUP.md) — global CLI install, Ollama, environment variables, system config (`ecp.config.yaml`), and docs.

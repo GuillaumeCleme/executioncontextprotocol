@@ -36,24 +36,20 @@ pnpm install
 
 ## Running the CLI
 
-The CLI is TypeScript and runs via [tsx](https://github.com/privatenumber/tsx). From the repo root you can run:
-
-**Using npm:**
+Prefer installing/linking the CLI once so you can use `ecp` from your shell.
 
 ```bash
-npx tsx packages/cli/src/index.ts run examples/single-executor/context.yaml --enable openai -i topic="Getting started"
+npm install -g tsx
+cd packages/cli
+npm link
+cd ../..
 ```
 
-**Using pnpm:**
+Then run:
 
 ```bash
-pnpm exec tsx packages/cli/src/index.ts run examples/single-executor/context.yaml --enable openai -i topic="Getting started"
-```
-
-**Validate a Context:**
-
-```bash
-npx tsx packages/cli/src/index.ts validate examples/single-executor/context.yaml
+ecp run examples/single-executor/context.yaml --enable openai -i topic="Getting started"
+ecp validate examples/single-executor/context.yaml
 ```
 
 ------------------------------------------------------------------------
@@ -145,7 +141,11 @@ Lighter alternative: `ollama pull llama3.2:1b`. Other options with good tool sup
    ecp run examples/single-executor/context.yaml --provider ollama --enable ollama --model llama3.2:3b -i topic="Test"
    ```
 
-   (Use `npx tsx packages/cli/src/index.ts` instead of `ecp` if you didn’t link the CLI.)
+   If you didn’t link the CLI, run via your package manager:
+
+   ```bash
+   pnpm exec tsx packages/cli/src/index.ts run examples/single-executor/context.yaml --provider ollama --enable ollama --model llama3.2:3b -i topic="Test"
+   ```
 
 ------------------------------------------------------------------------
 
@@ -190,8 +190,9 @@ See [`config/ecp.config.example.yaml`](config/ecp.config.example.yaml) for `allo
 | Goal              | Command / step |
 |-------------------|----------------|
 | Install deps      | `npm install` or `pnpm install` |
-| Run a Context     | `npx tsx packages/cli/src/index.ts run <context.yaml> --enable openai -i key=value` |
-| Validate          | `npx tsx packages/cli/src/index.ts validate <context.yaml>` |
+| Link `ecp` CLI    | `npm install -g tsx` then `npm link` from `packages/cli` |
+| Run a Context     | `ecp run <context.yaml> --enable openai -i key=value` |
+| Validate          | `ecp validate <context.yaml>` |
 | Use OpenAI        | Set `OPENAI_API_KEY` |
 | Use Ollama        | Install [Ollama](https://ollama.com/), `ollama pull llama3.2:3b`, then `--provider ollama --enable ollama --model llama3.2:3b` |
 | System config     | Copy `config/ecp.config.example.yaml` to `./ecp.config.yaml` or use `--config <path>` |

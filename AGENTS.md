@@ -31,8 +31,8 @@ This is a **monorepo** for the Execution Control Protocol (ECP), using npm works
 ### Running the CLI
 
 ```sh
-npx tsx packages/cli/src/index.ts run <context.yaml> --input key=value --debug
-npx tsx packages/cli/src/index.ts validate <context.yaml>
+ecp run <context.yaml> --input key=value --debug
+ecp validate <context.yaml>
 ```
 
 Requires `OPENAI_API_KEY` for `ecp run` (with default OpenAI provider).
@@ -41,9 +41,9 @@ Use `--provider ollama` for local Ollama models (no API key needed).
 Context manifests have required inputs. Pass them with `--input`:
 
 ```sh
-npx tsx packages/cli/src/index.ts validate spec.yaml --input shopifyStoreId=demo --input jiraProject=DEMO
-npx tsx packages/cli/src/index.ts validate examples/single-executor/context.yaml --input topic=test
-npx tsx packages/cli/src/index.ts validate examples/controller-specialist/context.yaml --input subject=test
+ecp validate spec.yaml --input shopifyStoreId=demo --input jiraProject=DEMO
+ecp validate examples/single-executor/context.yaml --input topic=test
+ecp validate examples/controller-specialist/context.yaml --input subject=test
 ```
 
 ### Gotchas

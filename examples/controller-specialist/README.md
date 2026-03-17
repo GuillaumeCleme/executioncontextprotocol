@@ -13,7 +13,7 @@ A multi-agent ECP Context demonstrating the delegate orchestration strategy.
 
 ```bash
 # From the repo root
-npx tsx packages/cli/src/index.ts run examples/controller-specialist/context.yaml \
+ecp run examples/controller-specialist/context.yaml \
   --input subject="Model Context Protocol" \
   --debug
 ```

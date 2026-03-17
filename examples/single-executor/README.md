@@ -10,7 +10,7 @@ Given a `topic` input, the `summarizer` executor calls the LLM once and produces
 
 ```bash
 # From the repo root
-npx tsx packages/cli/src/index.ts run examples/single-executor/context.yaml \
+ecp run examples/single-executor/context.yaml \
   --input topic="Execution Control Protocol" \
   --debug
 ```
