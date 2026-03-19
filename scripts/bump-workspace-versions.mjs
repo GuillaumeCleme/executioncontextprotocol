@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Bump the same version in root package.json and every packages/*/package.json.
+ * Bump the same version in root package.json and every packages/<workspace>/package.json.
  * Usage: node scripts/bump-workspace-versions.mjs <newVersion>
  * Example: npm run version:bump -- 0.4.0
  */
