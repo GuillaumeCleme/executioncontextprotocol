@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import ora from "ora";
 
 import {
+  BUILTIN_PLUGIN_VERSION,
   ECPEngine,
   loadContext,
   resolveInputs,
@@ -207,8 +208,8 @@ export default class Run extends Command {
         defaultModel: selectedModel ?? ollamaDefaults.defaultModel,
       },
     });
-    registerBuiltinLoggers(registry, { version: "0.3.0", file: {} });
-    registerBuiltinPlugins(registry, { version: "0.3.0" });
+    registerBuiltinLoggers(registry, { version: BUILTIN_PLUGIN_VERSION, file: {} });
+    registerBuiltinPlugins(registry, { version: BUILTIN_PLUGIN_VERSION });
     registry.lock();
 
     const modelProvider = this.createModelProviderOrFail(registry, providerToUse);

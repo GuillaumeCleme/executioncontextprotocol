@@ -37,6 +37,7 @@ import { DefaultMountHydrator } from "../mounts/hydrator.js";
 import { createPolicyEnforcer } from "../policies/enforcer.js";
 import type { PolicyEnforcer } from "../policies/types.js";
 import type { TraceCollector } from "../tracing/collector.js";
+import { BUILTIN_PLUGIN_VERSION } from "../extensions/builtin-defaults.js";
 import type { ExtensionRegistry } from "../extensions/registry.js";
 import type { MemoryStore } from "./types.js";
 
@@ -1183,9 +1184,9 @@ export class ECPEngine {
         `Model provider extension "${providerRef.name}" is not registered.`,
       );
     }
-    if (registration.sourceType !== providerRef.type) {
+    if (registration.source !== providerRef.type) {
       throw new Error(
-        `Model provider "${providerRef.name}" expected source type "${providerRef.type}", got "${registration.sourceType}".`,
+        `Model provider "${providerRef.name}" expected source type "${providerRef.type}", got "${registration.source}".`,
       );
     }
     if (registration.version !== providerRef.version) {
@@ -1211,7 +1212,7 @@ export class ECPEngine {
       return {
         name: selector,
         type: "builtin",
-        version: "0.3.0",
+        version: BUILTIN_PLUGIN_VERSION,
       };
     }
     return selector;

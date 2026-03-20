@@ -329,7 +329,7 @@ describe("ECPEngine — extensibility registry", () => {
     registry.registerModelProvider({
       id: "provider-a",
       kind: "provider",
-      sourceType: "builtin",
+      source: "builtin",
       version: "1.0.0",
       create() {
         return new StaticProvider("provider-a", { provider: "provider-a" });
@@ -362,7 +362,7 @@ describe("ECPEngine — extensibility registry", () => {
     registry.registerModelProvider({
       id: "provider-a",
       kind: "provider",
-      sourceType: "builtin",
+      source: "builtin",
       version: "1.0.0",
       create() {
         return new StaticProvider("provider-a", { provider: "provider-a" });

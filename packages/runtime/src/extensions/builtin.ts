@@ -5,6 +5,7 @@
  */
 
 import type { ExtensionVersion } from "@executioncontrolprotocol/spec";
+import type { ModelProvider, ProgressCallback } from "@executioncontrolprotocol/plugins";
 import { OpenAIProvider } from "../providers/openai/openai-provider.js";
 import type { OpenAIProviderConfig } from "../providers/openai/openai-provider.js";
 import { OllamaProvider } from "../providers/ollama/ollama-provider.js";
@@ -12,6 +13,7 @@ import type { OllamaProviderConfig } from "../providers/ollama/ollama-provider.j
 import { createFileLogger } from "./loggers/file-logger.js";
 import type { FileLoggerConfig } from "./loggers/file-logger.js";
 import { registerBuiltinMemoryPlugin } from "../plugins/memory/index.js";
+import { BUILTIN_PLUGIN_VERSION } from "./builtin-defaults.js";
 import type { ExtensionRegistry } from "./registry.js";
 
 /**
@@ -42,15 +44,15 @@ export function registerBuiltinModelProviders(
   registry: ExtensionRegistry,
   config: BuiltinModelProviderConfig = {},
 ): void {
-  const version = config.version ?? "0.3.0";
+  const version = config.version ?? BUILTIN_PLUGIN_VERSION;
 
   registry.registerModelProvider({
     id: "openai",
     kind: "provider",
-    sourceType: "builtin",
+    source: "builtin",
     version,
     description: "Built-in OpenAI model provider extension.",
-    create(overrides) {
+    create(overrides): ModelProvider {
       return new OpenAIProvider({
         ...config.openai,
         ...asRecord(overrides),
@@ -61,7 +63,7 @@ export function registerBuiltinModelProviders(
   registry.registerModelProvider({
     id: "ollama",
     kind: "provider",
-    sourceType: "builtin",
+    source: "builtin",
     version,
     description: "Built-in Ollama model provider extension.",
     create(overrides) {
@@ -94,15 +96,15 @@ export function registerBuiltinLoggers(
   registry: ExtensionRegistry,
   config: BuiltinLoggerConfig = {},
 ): void {
-  const version = config.version ?? "0.3.0";
+  const version = config.version ?? BUILTIN_PLUGIN_VERSION;
 
   registry.registerPlugin({
     id: "file",
     kind: "logger",
-    sourceType: "builtin",
+    source: "builtin",
     version,
     description: "Appends execution progress to a log file in the user ECP directory (~/.ecp/logs).",
-    create(overrides) {
+    create(overrides): ProgressCallback {
       return createFileLogger({
         ...config.file,
         ...(overrides as FileLoggerConfig),

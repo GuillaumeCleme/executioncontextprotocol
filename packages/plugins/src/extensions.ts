@@ -19,8 +19,8 @@ export interface ExtensionRegistrationBase {
   /** Extension version string. */
   version: string;
 
-  /** Source type used to load this extension. */
-  sourceType: ExtensionSourceType;
+  /** How this extension is sourced (e.g. built-in vs npm). */
+  source: ExtensionSourceType;
 
   /** Optional human-readable summary. */
   description?: string;
