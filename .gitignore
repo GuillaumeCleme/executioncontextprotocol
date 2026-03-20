@@ -5,3 +5,6 @@ coverage/
 .coverage
 @coverage/
 .ecp/
+
+# CI: Ollama model blobs (OLLAMA_MODELS in .github/workflows/ci-pipeline.yml e2e job)
+.ollama-models/
