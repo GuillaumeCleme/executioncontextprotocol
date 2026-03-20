@@ -181,7 +181,7 @@ Lighter alternative: `ollama pull llama3.2:1b`. Other options with good tool sup
 
 ## System Config (ecp.config.yaml)
 
-ECP supports a **system config** file to allow-list extensions and set security policy. The CLI loads it from (in order):
+ECP supports a **system config** file to allow-list plugins and set security policy. The CLI loads it from (in order):
 
 1. Path given by **`--config <path>`**
 2. **`./ecp.config.yaml`** (current directory)
@@ -195,7 +195,7 @@ cp config/ecp.config.example.yaml ecp.config.yaml
 
 Then run without passing `--config`; the CLI will use `./ecp.config.yaml` if present.
 
-See [`config/ecp.config.example.yaml`](config/ecp.config.example.yaml) for `allowEnable`, `defaultEnable`, and `security` options.
+See [`config/ecp.config.example.yaml`](config/ecp.config.example.yaml) for `plugins.allowEnable`, `plugins.defaultEnable`, `plugins.security`, and related options.
 
 ------------------------------------------------------------------------
 
@@ -211,7 +211,7 @@ See [`config/ecp.config.example.yaml`](config/ecp.config.example.yaml) for `allo
   Then open the generated output (see `packages/docs` for config). A published version may be available at the [Docs badge](https://guillaumecleme.github.io/executioncontextprotocol/) link in the README.
 
 - **Full protocol spec:** [SPEC.md](SPEC.md)  
-- **Architecture and extension registration:** [ARCHITECTURE.md](ARCHITECTURE.md)
+- **Architecture and plugin registration:** [ARCHITECTURE.md](ARCHITECTURE.md)
 
 ------------------------------------------------------------------------
 

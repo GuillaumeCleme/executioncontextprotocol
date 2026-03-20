@@ -11,16 +11,18 @@ import {
   A2AAgentTransport,
   ExtensionRegistry,
   registerBuiltinModelProviders,
-  registerBuiltinProgressLoggers,
+  registerBuiltinLoggers,
   registerBuiltinPlugins,
   TraceCollector,
   ConsoleTraceExporter,
   JsonFileTraceExporter,
   type ProgressCallback,
   type ECPSystemConfig,
+  getSystemPluginPolicy,
 } from "@executioncontrolprotocol/runtime";
 
 import type { ECPContext, Orchestrator, Executor } from "@executioncontrolprotocol/spec";
+import { getContextPlugins } from "@executioncontrolprotocol/spec";
 import type { ModelProvider, MemoryStoreLike } from "@executioncontrolprotocol/runtime";
 
 import { parseKeyValueInputs, splitCommaSeparated } from "../lib/parsing.js";
@@ -92,7 +94,8 @@ export default class Run extends Command {
     }),
     config: Flags.string({
       char: "c",
-      description: "Path to system config (ecp.config.yaml). Default: ./ecp.config.yaml then ~/.ecp/config.yaml",
+      description:
+        "Path to system config (YAML/JSON). Default: ./ecp.config.yaml, ./ecp.config.json, then ~/.ecp/ (see ecp config path)",
       default: "",
     }),
     trace: Flags.boolean({
@@ -105,11 +108,11 @@ export default class Run extends Command {
       description: "Directory for trace files",
       default: getDefaultTraceDir(),
     }),
-    "progress-logger": Flags.string({
+    logger: Flags.string({
       char: "l",
       multiple: true,
       multipleNonGreedy: true,
-      description: "Enable a progress logger (e.g. file). Repeatable or comma-separated.",
+      description: "Enable a logger plugin (e.g. file). Repeatable or comma-separated.",
     }),
     debug: Flags.boolean({
       char: "d",
@@ -147,7 +150,7 @@ export default class Run extends Command {
         this.error(msg, { exit: 1 });
       }
     })();
-    const progressLoggerRaw = splitCommaSeparated(flags["progress-logger"] as string[] | undefined);
+    const loggerRaw = splitCommaSeparated(flags.logger as string[] | undefined);
 
     const context = loadContext(contextPath);
 
@@ -172,15 +175,15 @@ export default class Run extends Command {
       this.assertModelAllowedByPolicy(providerToUse, selectedModel, systemConfig);
     }
 
-    const enableFromConfig = systemConfig?.extensions?.defaultEnable ?? [];
+    const enableFromConfig = getSystemPluginPolicy(systemConfig)?.defaultEnable ?? [];
     const enableForRun = [...new Set([...enableFromConfig, providerToUse])];
 
-    const allowEnable = systemConfig?.extensions?.allowEnable;
+    const allowEnable = getSystemPluginPolicy(systemConfig)?.allowEnable;
     if (allowEnable && allowEnable.length > 0) {
       for (const id of enableForRun) {
         if (!allowEnable.includes(id)) {
           this.error(
-            `Provider "${id}" cannot be used because it is not in system config extensions.allowEnable.\n` +
+            `Provider "${id}" cannot be used because it is not in system config plugins.allowEnable.\n` +
               `Allowed: ${allowEnable.join(", ")}\n` +
               `Update your config first (ecp.config.yaml / ecp config) and rerun.`,
             { exit: 1 },
@@ -200,7 +203,7 @@ export default class Run extends Command {
         defaultModel: selectedModel ?? ollamaDefaults.defaultModel,
       },
     });
-    registerBuiltinProgressLoggers(registry, { version: "0.3.0", file: {} });
+    registerBuiltinLoggers(registry, { version: "0.3.0", file: {} });
     registerBuiltinPlugins(registry, { version: "0.3.0" });
     registry.lock();
 
@@ -222,15 +225,15 @@ export default class Run extends Command {
       }
     }
 
-    const progressLoggerCallbacks: ProgressCallback[] = [];
-    const plConfig = systemConfig?.progressLoggers;
-    const plEnable = progressLoggerRaw.length > 0 ? progressLoggerRaw : plConfig?.defaultEnable ?? [];
-    const plAllow = plConfig?.allowEnable;
-    if (plAllow && plAllow.length > 0) {
-      for (const id of plEnable) {
-        if (!plAllow.includes(id)) {
+    const loggerCallbacks: ProgressCallback[] = [];
+    const loggersConfig = systemConfig?.loggers;
+    const loggersEnabled = loggerRaw.length > 0 ? loggerRaw : loggersConfig?.defaultEnable ?? [];
+    const loggersAllow = loggersConfig?.allowEnable;
+    if (loggersAllow && loggersAllow.length > 0) {
+      for (const id of loggersEnabled) {
+        if (!loggersAllow.includes(id)) {
           this.error(
-            `Progress logger "${id}" is not in system config progressLoggers.allowEnable. Allowed: ${plAllow.join(
+            `Logger "${id}" is not in system config loggers.allowEnable. Allowed: ${loggersAllow.join(
               ", ",
             )}`,
             { exit: 1 },
@@ -238,13 +241,13 @@ export default class Run extends Command {
         }
       }
     }
-    for (const id of plEnable) {
+    for (const id of loggersEnabled) {
       try {
-        const cb = registry.createProgressLogger(id, plConfig?.config?.[id]);
-        progressLoggerCallbacks.push(cb);
+        const cb = registry.createLogger(id, loggersConfig?.config?.[id]);
+        loggerCallbacks.push(cb);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        this.error(`Failed to create progress logger "${id}": ${msg}`, { exit: 1 });
+        this.error(`Failed to create logger "${id}": ${msg}`, { exit: 1 });
       }
     }
 
@@ -254,9 +257,9 @@ export default class Run extends Command {
       : undefined;
 
     const onProgress: ProgressCallback | ProgressCallback[] | undefined =
-      builtInProgress && progressLoggerCallbacks.length > 0
-        ? [builtInProgress, ...progressLoggerCallbacks]
-        : builtInProgress ?? (progressLoggerCallbacks.length > 0 ? progressLoggerCallbacks : undefined);
+      builtInProgress && loggerCallbacks.length > 0
+        ? [builtInProgress, ...loggerCallbacks]
+        : builtInProgress ?? (loggerCallbacks.length > 0 ? loggerCallbacks : undefined);
 
     if (flags.debug) {
       console.log(`\n  Running: ${contextPath}\n`);
@@ -268,7 +271,7 @@ export default class Run extends Command {
       const pluginReg = registry.listPlugins().find((p) => p.id === "memory");
       if (pluginReg) {
         try {
-          const instance = pluginReg.create(context.extensions?.config?.memory as Record<string, unknown>) as {
+          const instance = pluginReg.create(getContextPlugins(context)?.config?.memory as Record<string, unknown>) as {
             open(): Promise<MemoryStoreLike>;
           };
           memoryStore = await instance.open();
@@ -290,11 +293,11 @@ export default class Run extends Command {
       trace: flags.trace,
       memoryStore,
       onProgress,
-      extensions: {
+      plugins: {
         registry,
         enable: enableForRun,
-        allowEnable: systemConfig?.extensions?.allowEnable,
-        security: systemConfig?.extensions?.security ?? context.extensions?.security,
+        allowEnable: getSystemPluginPolicy(systemConfig)?.allowEnable,
+        security: getSystemPluginPolicy(systemConfig)?.security ?? getContextPlugins(context)?.security,
       },
     });
 
@@ -395,20 +398,20 @@ export default class Run extends Command {
   }
 
   private assertProviderAllowedByPolicy(providerId: string, systemConfig?: ECPSystemConfig): void {
-    const allowEnable = systemConfig?.extensions?.allowEnable;
+    const allowEnable = getSystemPluginPolicy(systemConfig)?.allowEnable;
     if (allowEnable?.length && !allowEnable.includes(providerId)) {
       this.error(
-        `Provider "${providerId}" is blocked by system config extensions.allowEnable.\n` +
+        `Provider "${providerId}" is blocked by system config plugins.allowEnable.\n` +
           `Allowed: ${allowEnable.join(", ")}\n` +
           `Update your config first (ecp.config.yaml / ecp config) and rerun.`,
         { exit: 1 },
       );
     }
 
-    const allowIds = systemConfig?.extensions?.security?.allowIds;
+    const allowIds = getSystemPluginPolicy(systemConfig)?.security?.allowIds;
     if (allowIds?.length && !allowIds.includes(providerId)) {
       this.error(
-        `Provider "${providerId}" is blocked by system config extensions.security.allowIds.\n` +
+        `Provider "${providerId}" is blocked by system config plugins.security.allowIds.\n` +
           `Allowed IDs: ${allowIds.join(", ")}\n` +
           `Update your config first (ecp.config.yaml / ecp config) and rerun.`,
         { exit: 1 },

@@ -290,7 +290,7 @@ Included in this repository is an example Context manifest:
 
 See also the [full specification](SPEC.md) and the
 [TypeScript type definitions](packages/spec/src/types/ecp.ts).
-The extension registration proposal is documented in
+Plugin registration and loader architecture are documented in
 [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ------------------------------------------------------------------------
@@ -307,11 +307,11 @@ metadata:
   name: hello-agent
   version: 1.0.0
 
-extensions:
+plugins:
   version: 1.0.0
   providers:
     - name: openai
-      kind: model-provider
+      kind: provider
       type: builtin
       version: 0.3.0
   security: {}
@@ -361,7 +361,7 @@ See [`examples/single-executor/context.yaml`](examples/single-executor/context.y
 | [`spec.yaml`](spec.yaml) | Canonical example Context manifest |
 | [`SPEC.md`](SPEC.md) | Full protocol specification |
 | **[`SETUP.md`](SETUP.md)** | **Setup guide: install, CLI (global), env vars, Ollama, system config, docs** |
-| [`config/`](config/) | Example system config (`ecp.config.example.yaml`) — allow-list extensions and security; use with `--config` or copy to `./ecp.config.yaml` / `~/.ecp/config.yaml` |
+| [`config/`](config/) | Example system config (`ecp.config.example.yaml`) — allow-list plugins and security; use with `--config` or copy to `./ecp.config.yaml` / `~/.ecp/config.yaml` |
 | [`packages/spec/`](packages/spec/) | TypeScript types, JSON Schema, validators |
 | [`packages/runtime/`](packages/runtime/) | Execution engine, providers, protocols |
 | [`packages/cli/`](packages/cli/) | CLI tool (`ecp run` / `ecp validate`) |

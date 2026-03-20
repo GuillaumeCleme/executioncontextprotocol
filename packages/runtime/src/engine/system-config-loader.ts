@@ -5,13 +5,14 @@
  * @category Engine
  */
 
-import { readFileSync, existsSync } from "node:fs";
-import { resolve, extname } from "node:path";
+import { readFileSync, existsSync, writeFileSync, mkdirSync } from "node:fs";
+import { resolve, extname, dirname } from "node:path";
 import { homedir } from "node:os";
 import yaml from "js-yaml";
 import type { ECPSystemConfig } from "./types.js";
 
 const CONFIG_FILENAME = "ecp.config.yaml";
+const CONFIG_JSON_FILENAME = "ecp.config.json";
 
 /**
  * Default paths to look for system config, in order of precedence.
@@ -23,22 +24,50 @@ const CONFIG_FILENAME = "ecp.config.yaml";
  * @category Engine
  */
 export function getDefaultConfigPaths(cwd: string): string[] {
+  const home = homedir();
   return [
     resolve(cwd, CONFIG_FILENAME),
-    resolve(homedir(), ".ecp", "config.yaml"),
-    resolve(homedir(), ".ecp", CONFIG_FILENAME),
+    resolve(cwd, CONFIG_JSON_FILENAME),
+    resolve(home, ".ecp", "config.yaml"),
+    resolve(home, ".ecp", "config.json"),
+    resolve(home, ".ecp", CONFIG_FILENAME),
   ];
 }
 
 /**
- * Load ECP system config from a YAML or JSON file.
- *
- * @param filePath - Absolute or relative path to the config file.
- * @returns The parsed config object.
- * @throws If the file cannot be read or parsed.
+ * Resolved plugin policy block from system config.
  *
  * @category Engine
  */
+export function getSystemPluginPolicy(
+  config: ECPSystemConfig | undefined,
+): ECPSystemConfig["plugins"] | undefined {
+  return config?.plugins;
+}
+
+function parseSystemConfigFromParsed(parsed: unknown, sourceLabel: string): ECPSystemConfig {
+  const config = parsed as ECPSystemConfig;
+  if (!config || typeof config !== "object") {
+    throw new Error(`Failed to parse system config from ${sourceLabel}: not an object`);
+  }
+  return config;
+}
+
+/**
+ * Parse system config from a YAML or JSON string (used by CLI defaults and tests).
+ *
+ * @category Engine
+ */
+export function parseSystemConfigString(raw: string, format: "yaml" | "json"): ECPSystemConfig {
+  let parsed: unknown;
+  if (format === "json") {
+    parsed = JSON.parse(raw);
+  } else {
+    parsed = yaml.load(raw);
+  }
+  return parseSystemConfigFromParsed(parsed, "string");
+}
+
 export function loadSystemConfig(filePath: string): ECPSystemConfig {
   const raw = readFileSync(filePath, "utf-8");
   const ext = extname(filePath).toLowerCase();
@@ -52,11 +81,28 @@ export function loadSystemConfig(filePath: string): ECPSystemConfig {
     parsed = yaml.load(raw);
   }
 
-  const config = parsed as ECPSystemConfig;
-  if (!config || typeof config !== "object") {
-    throw new Error(`Failed to parse system config from ${filePath}: not an object`);
+  return parseSystemConfigFromParsed(parsed, filePath);
+}
+
+/**
+ * Serialize config for display (no file I/O).
+ *
+ * @category Engine
+ */
+export function stringifySystemConfig(config: ECPSystemConfig, format: "yaml" | "json"): string {
+  if (format === "json") {
+    return `${JSON.stringify(config, null, 2)}\n`;
   }
-  return config;
+  let body = yaml.dump(config, { lineWidth: 120, noRefs: true });
+  if (!body.endsWith("\n")) body += "\n";
+  return body;
+}
+
+export function saveSystemConfig(filePath: string, config: ECPSystemConfig): void {
+  mkdirSync(dirname(filePath), { recursive: true });
+  const ext = extname(filePath).toLowerCase();
+  const format: "yaml" | "json" = ext === ".json" ? "json" : "yaml";
+  writeFileSync(filePath, stringifySystemConfig(config, format), "utf-8");
 }
 
 /**

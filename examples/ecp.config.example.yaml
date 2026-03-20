@@ -1,13 +1,13 @@
 # ECP system config — copy to ~/.ecp/config.yaml to use.
 # See getDefaultConfigPaths() for resolution order.
 
-extensions:
+plugins:
   allowEnable: [openai, ollama]
   defaultEnable: [ollama]
 
-# Progress loggers receive the same events as the CLI (phase, steps, reasoning).
+# Loggers receive the same events as the CLI (phase, steps, reasoning).
 # Enable "file" to append a log to ~/.ecp/logs/ecp.log
-progressLoggers:
+loggers:
   allowEnable: [file]
   defaultEnable: [file]
   config:

@@ -9,8 +9,8 @@ import { OpenAIProvider } from "../providers/openai/openai-provider.js";
 import type { OpenAIProviderConfig } from "../providers/openai/openai-provider.js";
 import { OllamaProvider } from "../providers/ollama/ollama-provider.js";
 import type { OllamaProviderConfig } from "../providers/ollama/ollama-provider.js";
-import { createFileProgressLogger } from "./progress-loggers/file-logger.js";
-import type { FileProgressLoggerConfig } from "./progress-loggers/file-logger.js";
+import { createFileLogger } from "./loggers/file-logger.js";
+import type { FileLoggerConfig } from "./loggers/file-logger.js";
 import { registerBuiltinMemoryPlugin } from "../plugins/memory/index.js";
 import type { ExtensionRegistry } from "./registry.js";
 
@@ -46,7 +46,7 @@ export function registerBuiltinModelProviders(
 
   registry.registerModelProvider({
     id: "openai",
-    kind: "model-provider",
+    kind: "provider",
     sourceType: "builtin",
     version,
     description: "Built-in OpenAI model provider extension.",
@@ -60,7 +60,7 @@ export function registerBuiltinModelProviders(
 
   registry.registerModelProvider({
     id: "ollama",
-    kind: "model-provider",
+    kind: "provider",
     sourceType: "builtin",
     version,
     description: "Built-in Ollama model provider extension.",
@@ -74,38 +74,38 @@ export function registerBuiltinModelProviders(
 }
 
 /**
- * Configuration for registering built-in progress loggers.
+ * Configuration for registering built-in logger extensions.
  *
  * @category Extensions
  */
-export interface BuiltinProgressLoggerConfig {
+export interface BuiltinLoggerConfig {
   /** Built-in extension version to report for registrations. */
   version?: ExtensionVersion;
 
-  /** Configuration for the file progress logger (log dir, file name). */
-  file?: FileProgressLoggerConfig;
+  /** Configuration for the file logger (log dir, file name). */
+  file?: FileLoggerConfig;
 }
 
 /**
- * Register built-in progress loggers in a registry.
+ * Register built-in logger extensions in a registry.
  * Includes a file logger that writes to the user's ECP directory (~/.ecp/logs).
  */
-export function registerBuiltinProgressLoggers(
+export function registerBuiltinLoggers(
   registry: ExtensionRegistry,
-  config: BuiltinProgressLoggerConfig = {},
+  config: BuiltinLoggerConfig = {},
 ): void {
   const version = config.version ?? "0.3.0";
 
-  registry.registerProgressLogger({
+  registry.registerPlugin({
     id: "file",
-    kind: "progress-logger",
+    kind: "logger",
     sourceType: "builtin",
     version,
     description: "Appends execution progress to a log file in the user ECP directory (~/.ecp/logs).",
     create(overrides) {
-      return createFileProgressLogger({
+      return createFileLogger({
         ...config.file,
-        ...(overrides as FileProgressLoggerConfig),
+        ...(overrides as FileLoggerConfig),
       });
     },
   });

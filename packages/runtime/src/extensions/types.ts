@@ -6,7 +6,6 @@
 
 import type { ExtensionSourceType } from "@executioncontrolprotocol/spec";
 import type { ModelProvider } from "../providers/model-provider.js";
-import type { ProgressCallback } from "../engine/types.js";
 
 /**
  * Base metadata for all runtime extension registrations.
@@ -33,8 +32,8 @@ export interface ExtensionRegistrationBase {
  * @category Extensions
  */
 export interface ModelProviderRegistration extends ExtensionRegistrationBase {
-  /** Fixed kind discriminator for model provider extensions. */
-  kind: "model-provider";
+  /** Fixed kind discriminator for model provider plugins. */
+  kind: "provider";
 
   /**
    * Create a model provider instance from extension configuration.
@@ -58,34 +57,21 @@ export interface ExecutorRegistration extends ExtensionRegistrationBase {
 }
 
 /**
- * Factory contract for plugin extensions.
+ * Factory contract for auxiliary plugins (logger, memory store, …).
  *
  * @category Extensions
  */
 export interface PluginRegistration extends ExtensionRegistrationBase {
-  /** Fixed kind discriminator for plugin extensions. */
-  kind: "plugin";
+  /**
+   * Auxiliary plugin kind (loggers, memory stores, …).
+   */
+  kind: "logger" | "memory";
 
   /**
-   * Create a plugin extension instance from extension configuration.
+   * Create a plugin instance from plugin configuration.
+   * Shape depends on `kind` (e.g. `ProgressCallback` for loggers, memory factory for memory).
    */
   create(config?: Record<string, unknown>): unknown;
 }
 
-/**
- * Factory contract for progress logger extensions.
- * Progress loggers receive execution progress events (phase, steps, reasoning).
- *
- * @category Extensions
- */
-export interface ProgressLoggerRegistration extends ExtensionRegistrationBase {
-  /** Fixed kind discriminator for progress logger extensions. */
-  kind: "progress-logger";
-
-  /**
-   * Create a progress logger callback from extension configuration.
-   * The callback will be invoked for each progress event during a run.
-   */
-  create(config?: Record<string, unknown>): ProgressCallback;
-}
-
+export type { PluginKind } from "@executioncontrolprotocol/spec";

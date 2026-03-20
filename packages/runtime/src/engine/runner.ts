@@ -11,12 +11,13 @@
 import type {
   ECPContext,
   Executor,
-  ExtensionSecurityPolicy,
+  PluginSecurityPolicy,
   ModelProviderReference,
   ModelProviderSelector,
   Orchestrator,
   SchemaDefinition,
 } from "@executioncontrolprotocol/spec";
+import { getContextPlugins } from "@executioncontrolprotocol/spec";
 import type { ModelProvider, ChatMessage, ToolDefinition, ToolCall } from "../providers/model-provider.js";
 import type { ToolInvoker } from "../protocols/tool-invoker.js";
 import type { AgentTransport, AgentRef, DelegatedTask } from "../protocols/agent-transport.js";
@@ -83,7 +84,7 @@ export class ECPEngine {
     config: EngineConfig = {},
   ) {
     this.modelProvider = modelProvider;
-    this.extensionRegistry = config.extensions?.registry;
+    this.extensionRegistry = config.plugins?.registry;
     this.toolInvoker = toolInvoker;
     this.agentTransport = agentTransport;
     this.config = config;
@@ -1199,7 +1200,7 @@ export class ECPEngine {
       return cached;
     }
 
-    const providerConfig = context.extensions?.config?.[providerRef.name];
+    const providerConfig = getContextPlugins(context)?.config?.[providerRef.name];
     const created = this.extensionRegistry.createModelProvider(providerRef.name, providerConfig);
     this.modelProviderCache.set(cacheKey, created);
     return created;
@@ -1220,11 +1221,11 @@ export class ECPEngine {
     provider: ModelProviderReference,
     context: ECPContext,
   ): void {
-    const security = this.getEffectiveExtensionSecurity(context);
+    const security = this.getEffectivePluginSecurity(context);
 
-    if (security.allowKinds?.length && !security.allowKinds.includes("model-provider")) {
+    if (security.allowKinds?.length && !security.allowKinds.includes("provider")) {
       throw new Error(
-        `Model provider "${provider.name}" denied: kind "model-provider" is not allowed.`,
+        `Model provider "${provider.name}" denied: kind "provider" is not allowed.`,
       );
     }
 
@@ -1239,18 +1240,18 @@ export class ECPEngine {
 
     if (security.allowIds?.length && !security.allowIds.includes(provider.name)) {
       throw new Error(
-        `Model provider "${provider.name}" denied: provider is not in extensions allowIds.`,
+        `Model provider "${provider.name}" denied: provider is not in plugins allowIds.`,
       );
     }
 
     if (security.denyIds?.includes(provider.name)) {
       throw new Error(
-        `Model provider "${provider.name}" denied: provider is listed in extensions denyIds.`,
+        `Model provider "${provider.name}" denied: provider is listed in plugins denyIds.`,
       );
     }
 
-    const runtimeEnable = this.config.extensions?.enable;
-    const allowEnable = this.config.extensions?.allowEnable;
+    const runtimeEnable = this.config.plugins?.enable;
+    const allowEnable = this.config.plugins?.allowEnable;
     if (allowEnable !== undefined && allowEnable.length > 0) {
       if (!allowEnable.includes(provider.name)) {
         throw new Error(
@@ -1261,26 +1262,26 @@ export class ECPEngine {
     if (runtimeEnable !== undefined && runtimeEnable.length > 0) {
       if (!runtimeEnable.includes(provider.name)) {
         throw new Error(
-          `Model provider "${provider.name}" denied: provider is not enabled for this run (extensions.enable).`,
+          `Model provider "${provider.name}" denied: provider is not enabled for this run (plugins.enable).`,
         );
       }
     } else {
       const contextProviderIds = new Set(
-        context.extensions?.providers?.map((p) => p.name) ?? [],
+        getContextPlugins(context)?.providers?.map((p) => p.name) ?? [],
       );
       if (contextProviderIds.size > 0 && !contextProviderIds.has(provider.name)) {
         throw new Error(
-          `Model provider "${provider.name}" denied: provider is not declared in context.extensions.providers.`,
+          `Model provider "${provider.name}" denied: provider is not declared in context.plugins.providers.`,
         );
       }
     }
   }
 
-  private getEffectiveExtensionSecurity(
+  private getEffectivePluginSecurity(
     context: ECPContext,
-  ): ExtensionSecurityPolicy {
-    const contextPolicy = context.extensions?.security;
-    const systemPolicy = this.config.extensions?.security;
+  ): PluginSecurityPolicy {
+    const contextPolicy = getContextPlugins(context)?.security;
+    const systemPolicy = this.config.plugins?.security;
     const allowKinds = systemPolicy?.allowKinds ?? contextPolicy?.allowKinds;
     const allowSourceTypes =
       systemPolicy?.allowSourceTypes ?? contextPolicy?.allowSourceTypes;
@@ -1288,7 +1289,7 @@ export class ECPEngine {
       ...contextPolicy,
       ...systemPolicy,
       allowKinds,
-      // Default: allow all builtin extensions when not specified
+      // Default: allow all built-in plugins when not specified
       allowSourceTypes:
         allowSourceTypes !== undefined && allowSourceTypes.length > 0
           ? allowSourceTypes

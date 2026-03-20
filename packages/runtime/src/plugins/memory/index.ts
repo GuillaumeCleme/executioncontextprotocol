@@ -46,7 +46,7 @@ export function registerBuiltinMemoryPlugin(
 
   registry.registerPlugin({
     id: "memory",
-    kind: "plugin",
+    kind: "memory",
     sourceType: "builtin",
     version,
     description:

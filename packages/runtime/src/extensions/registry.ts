@@ -8,9 +8,9 @@ import type {
   ExecutorRegistration,
   ModelProviderRegistration,
   PluginRegistration,
-  ProgressLoggerRegistration,
 } from "./types.js";
 import type { ModelProvider } from "../providers/model-provider.js";
+import type { ProgressCallback } from "../engine/types.js";
 
 /**
  * In-memory registry of runtime extension factories.
@@ -21,7 +21,6 @@ export class ExtensionRegistry {
   private readonly modelProviders = new Map<string, ModelProviderRegistration>();
   private readonly executors = new Map<string, ExecutorRegistration>();
   private readonly plugins = new Map<string, PluginRegistration>();
-  private readonly progressLoggers = new Map<string, ProgressLoggerRegistration>();
   private locked = false;
 
   /**
@@ -36,7 +35,7 @@ export class ExtensionRegistry {
    */
   registerModelProvider(registration: ModelProviderRegistration): void {
     this.assertUnlocked();
-    this.assertNotRegistered(registration.id, "model-provider");
+    this.assertNotRegistered(registration.id, "provider");
     this.modelProviders.set(registration.id, registration);
   }
 
@@ -50,16 +49,7 @@ export class ExtensionRegistry {
   }
 
   /**
-   * Register a progress logger extension.
-   */
-  registerProgressLogger(registration: ProgressLoggerRegistration): void {
-    this.assertUnlocked();
-    this.assertNotRegistered(registration.id, "progress-logger");
-    this.progressLoggers.set(registration.id, registration);
-  }
-
-  /**
-   * Register a plugin extension.
+   * Register a plugin extension (logger, memory, or future `PluginKind` values).
    */
   registerPlugin(registration: PluginRegistration): void {
     this.assertUnlocked();
@@ -103,6 +93,13 @@ export class ExtensionRegistry {
   }
 
   /**
+   * Get a plugin registration by ID (any {@link PluginKind}).
+   */
+  getPluginRegistration(id: string): PluginRegistration | undefined {
+    return this.plugins.get(id);
+  }
+
+  /**
    * List registered plugin extensions.
    */
   listPlugins(): PluginRegistration[] {
@@ -110,31 +107,40 @@ export class ExtensionRegistry {
   }
 
   /**
-   * Create a progress logger by ID.
+   * List plugins of a given kind (`logger` or `memory`).
    */
-  createProgressLogger(
+  listPluginsByKind(kind: "logger" | "memory"): PluginRegistration[] {
+    return this.listPlugins().filter((p) => p.kind === kind);
+  }
+
+  /**
+   * Create a logger plugin callback by plugin ID (`kind` must be `"logger"`).
+   */
+  createLogger(
     id: string,
     config?: Record<string, unknown>,
-  ): ReturnType<ProgressLoggerRegistration["create"]> {
-    const registration = this.progressLoggers.get(id);
-    if (!registration) {
-      throw new Error(`Progress logger extension "${id}" is not registered.`);
+  ): ProgressCallback {
+    const registration = this.plugins.get(id);
+    if (!registration || registration.kind !== "logger") {
+      throw new Error(`Logger plugin "${id}" is not registered.`);
     }
-    return registration.create(config);
+    return registration.create(config) as ProgressCallback;
   }
 
   /**
-   * Get a progress logger registration by ID.
+   * Get a logger plugin registration by ID, if present.
    */
-  getProgressLoggerRegistration(id: string): ProgressLoggerRegistration | undefined {
-    return this.progressLoggers.get(id);
+  getLoggerRegistration(id: string): PluginRegistration | undefined {
+    const p = this.plugins.get(id);
+    if (p?.kind === "logger") return p;
+    return undefined;
   }
 
   /**
-   * List registered progress logger extensions.
+   * List registered logger plugins (`kind === "logger"`).
    */
-  listProgressLoggers(): ProgressLoggerRegistration[] {
-    return [...this.progressLoggers.values()];
+  listLoggers(): PluginRegistration[] {
+    return this.listPluginsByKind("logger");
   }
 
   private assertUnlocked(): void {
@@ -145,16 +151,14 @@ export class ExtensionRegistry {
 
   private assertNotRegistered(
     id: string,
-    kind: "model-provider" | "executor" | "plugin" | "progress-logger",
+    kind: "provider" | "executor" | "plugin",
   ): void {
     const exists =
       this.modelProviders.has(id) ||
       this.executors.has(id) ||
-      this.plugins.has(id) ||
-      this.progressLoggers.has(id);
+      this.plugins.has(id);
     if (exists) {
       throw new Error(`Extension "${id}" is already registered; duplicate ${kind} registration denied.`);
     }
   }
 }
-

@@ -289,12 +289,12 @@ function makeExtensibleContext(providerName: string): ECPContext {
       strategy: "single",
       produces: "Result",
     },
-    extensions: {
+    plugins: {
       version: "1.0.0",
       providers: [
         {
           name: providerName,
-          kind: "model-provider",
+          kind: "provider",
           type: "builtin",
           version: "1.0.0",
         },
@@ -328,7 +328,7 @@ describe("ECPEngine — extensibility registry", () => {
 
     registry.registerModelProvider({
       id: "provider-a",
-      kind: "model-provider",
+      kind: "provider",
       sourceType: "builtin",
       version: "1.0.0",
       create() {
@@ -338,7 +338,7 @@ describe("ECPEngine — extensibility registry", () => {
     registry.lock();
 
     const engine = new ECPEngine(fallbackModel, tools, transport, {
-      extensions: {
+      plugins: {
         registry,
         enable: ["provider-a"],
       },
@@ -361,7 +361,7 @@ describe("ECPEngine — extensibility registry", () => {
 
     registry.registerModelProvider({
       id: "provider-a",
-      kind: "model-provider",
+      kind: "provider",
       sourceType: "builtin",
       version: "1.0.0",
       create() {
@@ -371,7 +371,7 @@ describe("ECPEngine — extensibility registry", () => {
     registry.lock();
 
     const engine = new ECPEngine(fallbackModel, tools, transport, {
-      extensions: {
+      plugins: {
         registry,
         enable: ["provider-a"],
         security: {
@@ -406,9 +406,9 @@ function makeMemoryContext(): ECPContext {
       strategy: "single",
       produces: "Result",
     },
-    extensions: {
+    plugins: {
       version: "1.0.0",
-      providers: [{ name: "mock", kind: "model-provider", type: "builtin", version: "1.0.0" }],
+      providers: [{ name: "mock", kind: "provider", type: "builtin", version: "1.0.0" }],
       security: {},
     },
     executors: [

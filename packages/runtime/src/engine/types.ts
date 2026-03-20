@@ -10,7 +10,7 @@
 import type {
   ECPContext,
   Executor,
-  ExtensionSecurityPolicy,
+  PluginSecurityPolicy,
   MemoryScope,
   MountStage,
 } from "@executioncontrolprotocol/spec";
@@ -402,82 +402,82 @@ export interface EngineConfig {
   onProgress?: ProgressCallback | ProgressCallback[];
 
   /**
-   * Runtime extension registration and security configuration.
+   * Runtime plugin registry and security configuration.
    */
-  extensions?: ExtensionRuntimeConfig;
+  plugins?: PluginRuntimeConfig;
 }
 
 /**
- * Runtime extension controls supplied by the host system.
+ * Runtime plugin controls supplied by the host system.
  *
  * @category Engine
  */
-export interface ExtensionRuntimeConfig {
+export interface PluginRuntimeConfig {
   /**
-   * Extension registry used to resolve providers/executors/plugins.
+   * Plugin registry used to resolve providers, executors, loggers, memory, …
    */
   registry?: ExtensionRegistry;
 
   /**
-   * Extension IDs enabled for this run (e.g. from CLI --enable or system config).
-   * When set, only these extensions may be used. When unset, all providers
-   * declared by the context in extensions.providers are allowed.
+   * Plugin IDs enabled for this run (e.g. from CLI --enable or system config).
+   * When set, only these plugins may be used. When unset, all providers
+   * declared by the context in `plugins.providers` are allowed.
    */
   enable?: string[];
 
   /**
-   * Allow-list of extension IDs that may be enabled. When set, config.enable
+   * Allow-list of plugin IDs that may be enabled. When set, config.enable
    * must be a subset of this list (typically from system config).
    */
   allowEnable?: string[];
 
   /**
-   * System-level extension loading security policy.
+   * System-level plugin loading security policy.
    */
-  security?: ExtensionSecurityPolicy;
+  security?: PluginSecurityPolicy;
 }
 
 /**
  * System configuration for ECP (e.g. ecp.config.yaml).
- * Used to allow-list enabled extensions and set system security policy.
+ * Used to allow-list enabled plugins and set system security policy.
  * Can be loaded from --config path or default locations.
  *
  * @category Engine
  */
 export interface ECPSystemConfig {
   /**
-   * Extension allow-list and defaults.
+   * Plugin allow-list and defaults.
    */
-  extensions?: {
+  plugins?: {
     /**
-     * Extension IDs that may be enabled at runtime. When set, only these
+     * Plugin IDs that may be enabled at runtime. When set, only these
      * may appear in the runtime enable list (CLI --enable or config.defaultEnable).
      */
     allowEnable?: string[];
 
     /**
-     * Default extension IDs to enable when CLI does not pass --enable.
+     * Default plugin IDs to enable when CLI does not pass --enable.
      */
     defaultEnable?: string[];
 
     /**
-     * System-level extension security policy.
+     * System-level plugin security policy.
      */
-    security?: ExtensionSecurityPolicy;
+    security?: PluginSecurityPolicy;
   };
 
   /**
-   * Progress logger extensions: which loggers to enable and their config.
+   * Execution loggers: which logger plugins to enable and their config.
    * Loggers receive the same progress events as the CLI (phase, steps, reasoning).
    */
-  progressLoggers?: {
+  loggers?: {
     /**
-     * Default progress logger IDs to enable (e.g. ["file"]).
+     * Default logger IDs to enable (e.g. ["file"]).
      */
     defaultEnable?: string[];
 
     /**
-     * Allow-list of progress logger IDs. When set, only these may be enabled.
+     * Allow-list of logger IDs. When set, only these may be enabled.
      */
     allowEnable?: string[];
 

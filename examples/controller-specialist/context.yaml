@@ -6,11 +6,11 @@ metadata:
   version: 1.0.0
   description: Controller-specialist example — orchestrate research across two specialists (Ollama, default gemma3:1b)
 
-extensions:
+plugins:
   version: 1.0.0
   providers:
     - name: ollama
-      kind: model-provider
+      kind: provider
       type: builtin
       version: 0.3.0
   security: {}
