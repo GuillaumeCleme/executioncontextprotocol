@@ -1,0 +1,26 @@
+---
+description: GitHub branch rulesets and required status check contexts
+globs: .github/rulesets/**/*
+alwaysApply: false
+---
+
+# Rulesets and required status checks
+
+## Naming is exact-match
+
+- **`required_status_checks[].context` must match the PR “Checks” title character-for-character** (including the single ` / ` between segments). If names drift, required checks stay stuck on **Expected** while jobs are green.
+- After renaming workflows or jobs in `.github/workflows/`, open a PR and **copy check titles** from the **Checks** tab into the ruleset JSON (or GitHub UI).
+
+## What the first segment actually is (reusable workflows)
+
+- For **reusable workflows** (`jobs.<caller>.uses: ./.github/workflows/...`), the status check is **not** reliably the top-level workflow `name:` from `ci.yml` (e.g. `ci`). What often appears as the **first** segment is the **caller job id** — the key under `jobs:` that invokes the reusable workflow (e.g. `pipeline` → contexts like `pipeline / build`).
+- So the **parent workflow name** (`name:` on the entry workflow file) may **not** participate in the context string GitHub shows; **do not assume** it must be `ci / …` without verifying on a PR.
+- **Single-job workflows** may report a **one-part** context (e.g. `version` only), with no `workflow / job` prefix — still copy the exact string from the Checks UI.
+
+## `integration_id`
+
+- Exports from GitHub often include **`integration_id`** (e.g. GitHub Actions). If you add checks manually or import into another environment, you may need to match the integration that emits each check.
+
+## Repo copy
+
+- `protect-development.json` in this repo is a **template**. Strip or adjust **`id` / `source` / `source_type`** from UI exports before committing; re-add **`integration_id`** as needed when configuring the live ruleset.
