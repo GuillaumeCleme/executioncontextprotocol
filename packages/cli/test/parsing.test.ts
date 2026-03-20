@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import { parseKeyValueInputs, splitCommaSeparated, parseJsonObject } from "../src/lib/parsing.js";
+import { getRequiredInputNames } from "../src/lib/inputs.js";
 
 describe("CLI parsing helpers", () => {
   it("parses key=value inputs and converts booleans/numbers", () => {
@@ -27,6 +28,19 @@ describe("CLI parsing helpers", () => {
     expect(obj).toEqual({ x: 1 });
 
     expect(() => parseJsonObject("{not-json}", "--json-flag")).toThrow(/Invalid --json-flag/i);
+  });
+
+  it("extracts required input names from Context", () => {
+    const ctx = {
+      inputs: {
+        a: { type: "string", required: true },
+        b: { type: "number" },
+        c: { type: "boolean", required: false },
+      },
+    } as unknown as { inputs?: Record<string, { required?: boolean }> };
+
+    const required = getRequiredInputNames(ctx as any);
+    expect(required).toEqual(["a"]);
   });
 });
 

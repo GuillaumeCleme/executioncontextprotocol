@@ -289,7 +289,22 @@ export default class Run extends Command {
       engine.setTraceCollector(collector);
     }
 
-    const resolvedInputs = resolveInputs(context, inputs);
+    let resolvedInputs: typeof inputs;
+    try {
+      resolvedInputs = resolveInputs(context, inputs) as typeof inputs;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const missing = msg.match(/^Missing required input: "([^"]+)"$/);
+      if (missing) {
+        const inputName = missing[1];
+        this.error(
+          `\n  Error: Missing required input "${inputName}" defined in the Context manifest.\n` +
+            `  Provide it via --input ${inputName}=<value> (e.g. -i ${inputName}="...").\n`,
+          { exit: 1 },
+        );
+      }
+      throw err;
+    }
 
     const result = await engine.run({ context, inputs: resolvedInputs });
 
