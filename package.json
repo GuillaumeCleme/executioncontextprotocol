@@ -12,9 +12,9 @@
   "scripts": {
     "build": "tsc -b packages/spec packages/runtime packages/cli && npm run generate:schema --workspace=@executioncontrolprotocol/spec",
     "build:clean": "tsc -b packages/spec packages/runtime packages/cli --clean",
-    "lint": "eslint . && markdownlint-cli2 '**/*.md' '#node_modules' '#packages/*/node_modules'",
+    "lint": "eslint . && markdownlint-cli2 \"**/*.md\" \"#node_modules\" \"#packages/*/node_modules\"",
     "lint:ts": "eslint .",
-    "lint:md": "markdownlint-cli2 '**/*.md' '#node_modules' '#packages/*/node_modules'",
+    "lint:md": "markdownlint-cli2 \"**/*.md\" \"#node_modules\" \"#packages/*/node_modules\"",
     "generate:schema": "npm run generate:schema --workspace=@executioncontrolprotocol/spec",
     "validate": "npm run validate --workspace=@executioncontrolprotocol/spec",
     "docs": "npm run dev --workspace=@executioncontrolprotocol/docs",

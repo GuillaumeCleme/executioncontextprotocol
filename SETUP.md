@@ -217,13 +217,11 @@ See [`config/ecp.config.example.yaml`](config/ecp.config.example.yaml) for `allo
 
 ## Quick Reference
 
-| Goal          | Command / step                                                                                                                      |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Install deps  | `npm install` or `pnpm install`                                                                                                     |
-| Link `ecp` CLI | `npm run build` then `npm link` from `packages/cli`                                                                                |
-| Run a Context | `ecp run <context.yaml> --enable openai -i key=value`                                                                               |
-| Validate      | `ecp validate <context.yaml>`                                                                                                       |
-| Use OpenAI    | Set `OPENAI_API_KEY`                                                                                                                |
-| Use Ollama    | Install [Ollama](https://ollama.com/), `ollama pull llama3.2:3b`, then `--provider ollama --enable ollama --model llama3.2:3b`  |
-| System config | Copy `config/ecp.config.example.yaml` to `./ecp.config.yaml` or use `--config <path>`                                             |
-| Global `ecp`  | `npm run build` then `npm link` from `packages/cli`                                                                                 |
+- **Install deps:** `npm install` or `pnpm install`
+- **Link `ecp` CLI:** `npm run build` then `npm link` from `packages/cli`
+- **Run a Context:** `ecp run <context.yaml> --enable openai -i key=value`
+- **Validate:** `ecp validate <context.yaml>`
+- **Use OpenAI:** set `OPENAI_API_KEY`
+- **Use Ollama:** install [Ollama](https://ollama.com/), `ollama pull llama3.2:3b`, then `--provider ollama --enable ollama --model llama3.2:3b`
+- **System config:** copy `config/ecp.config.example.yaml` to `./ecp.config.yaml` or use `--config <path>`
+- **Global `ecp`:** `npm run build` then `npm link` from `packages/cli`
