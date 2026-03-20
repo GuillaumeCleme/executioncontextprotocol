@@ -94,17 +94,11 @@ jobs:
           key: ollama-models-${{ runner.os }}-gemma3-1b-v1
           restore-keys: |
             ollama-models-${{ runner.os }}-
-      # Install script extracts libs under /usr/local/lib/ollama and links the binary into PATH.
-      - name: Cache Ollama CLI
-        id: ollama-cli
-        uses: actions/cache@v4
-        with:
-          path: |
-            /usr/local/bin/ollama
-            /usr/local/lib/ollama
-          key: ollama-cli-${{ runner.os }}-v1
+      # Do not cache /usr/local/bin/ollama or /usr/local/lib/ollama: actions/cache restores as the
+      # runner user and cannot extract into /usr/local (permission denied). That yields a false "cache
+      # hit" plus a huge download, then tar fails and the install step runs anyway — slower than a
+      # plain curl|sh install every time.
       - name: Install Ollama
-        if: steps.ollama-cli.outputs.cache-hit != 'true'
         run: curl -fsSL https://ollama.com/install.sh | sh
       - name: Start Ollama server
         run: ollama serve &
