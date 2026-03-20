@@ -218,7 +218,6 @@ export default class Run extends Command {
     const toolServers = systemConfig?.toolServers;
 
     try {
-      // eslint-disable-next-line no-new
       new URL(flags["ollama-base-url"]);
     } catch {
       this.error(`Invalid --ollama-base-url: "${flags["ollama-base-url"]}" is not a valid URL.`, { exit: 1 });
@@ -284,7 +283,6 @@ export default class Run extends Command {
         : builtInProgress ?? (progressLoggerCallbacks.length > 0 ? progressLoggerCallbacks : undefined);
 
     if (flags.debug) {
-      // eslint-disable-next-line no-console
       console.log(`\n  Running: ${contextPath}\n`);
     }
 
@@ -301,7 +299,6 @@ export default class Run extends Command {
         } catch (err) {
           if (flags.debug) {
             const msg = err instanceof Error ? err.message : String(err);
-            // eslint-disable-next-line no-console
             console.error(`  Memory plugin open failed: ${msg}\n`);
           }
         }
@@ -362,57 +359,40 @@ export default class Run extends Command {
       else spinner.fail("Execution failed.");
     }
 
-    // eslint-disable-next-line no-console
     console.log("\n--- Execution Result ---");
-    // eslint-disable-next-line no-console
     console.log(`  Run ID:     ${result.runId}`);
-    // eslint-disable-next-line no-console
     console.log(`  Context:    ${result.contextName} v${result.contextVersion}`);
-    // eslint-disable-next-line no-console
     console.log(`  Success:    ${result.success}`);
-    // eslint-disable-next-line no-console
     console.log(`  Duration:   ${result.durationMs}ms`);
-    // eslint-disable-next-line no-console
     console.log(`  Tool calls: ${result.totalBudgetUsage.toolCalls}`);
 
     if (result.error) {
-      // eslint-disable-next-line no-console
       console.log(`  Error:      ${result.error}`);
     }
 
     if (result.output) {
-      // eslint-disable-next-line no-console
       console.log("\n--- Output ---");
-      // eslint-disable-next-line no-console
       console.log(JSON.stringify(result.output, null, 2));
     }
 
     if (!spinner) {
-      // eslint-disable-next-line no-console
       console.log("\n--- Executor Outputs ---");
       for (const [name, output] of Object.entries(result.executorOutputs)) {
-        // eslint-disable-next-line no-console
         console.log(`\n  [${name}]`);
-        // eslint-disable-next-line no-console
         console.log(JSON.stringify(output, null, 2));
       }
     }
 
     if (flags.debug) {
-      // eslint-disable-next-line no-console
       console.log("\n--- Execution Log ---");
       for (const entry of result.log) {
-        // eslint-disable-next-line no-console
         console.log(`  [${entry.level.toUpperCase().padEnd(5)}] ${entry.message}`);
       }
     }
 
     if (flags.trace) {
-      // eslint-disable-next-line no-console
       console.log(`\n  Trace saved to: ${flags["trace-dir"]}/${result.runId}.json`);
-      // eslint-disable-next-line no-console
       console.log(`  View with: ecp trace ${result.runId}`);
-      // eslint-disable-next-line no-console
       console.log(`  Graph with: ecp trace --output graph ${result.runId}`);
     }
 

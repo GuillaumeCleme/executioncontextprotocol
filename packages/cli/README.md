@@ -20,4 +20,3 @@ ecp run path/to/context.yaml --enable openai -i topic="Hello"
 
 - **Repo**: `https://github.com/executioncontrolprotocol/executioncontrolprotocol`
 - **Issues**: `https://github.com/executioncontrolprotocol/executioncontrolprotocol/issues`
-

@@ -1,7 +1,7 @@
 # GitHub Actions workflows
 
 | File | Purpose |
-|------|---------|
+| ---- | ------- |
 | **`ci.yml`** | Entry point: runs on pushes to `main` / `development` and on PRs targeting those branches. Calls `ci-pipeline.yml`. |
 | **`ci-pipeline.yml`** | Reusable pipeline: build, lint, validate, unit / integration / e2e tests. **npm publish** runs only on **push to `main`** (not on PRs or `development`). |
 | **`development.yml`** | On `development` (push + PR): checks workspace versions are above published npm versions before merge to `main`. |

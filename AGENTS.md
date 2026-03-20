@@ -7,7 +7,7 @@ This is a **monorepo** for the Execution Control Protocol (ECP), using npm works
 ### Repository structure
 
 | Path | Purpose |
-|---|---|
+| ---- | ------- |
 | `packages/spec/` | TypeScript types, JSON Schema generation, spec validation |
 | `packages/runtime/` | ECP execution engine (providers, protocols, mounts, policies) |
 | `packages/cli/` | CLI tool: `ecp run` and `ecp validate` |
@@ -18,7 +18,7 @@ This is a **monorepo** for the Execution Control Protocol (ECP), using npm works
 ### NPM scripts (run from repo root)
 
 | Command | What it does |
-|---|---|
+| ------- | ------------ |
 | `npm run build` | TypeScript type-check all packages (spec → runtime → cli) |
 | `npm run generate:schema` | Generate JSON Schema from spec types |
 | `npm run lint` | ESLint + markdownlint |

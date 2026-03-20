@@ -204,7 +204,7 @@ So the orchestrator's output is **not** broadcast to every executor; only the en
 ## What Is Shared
 
 | What | Shared with all executors? | Notes |
-|------|----------------------------|--------|
+| ---- | -------------------------- | ----- |
 | **Context inputs** | Yes | Resolved once per run; every execution object receives the same `state.inputs` in its prompt (e.g. "Context inputs: ..."). |
 | **Orchestrator output (plan)** | No | Used by the engine for control flow and mount selection. Only the merger sees it, inside `__prior_outputs`. |
 | **Prior executor outputs** | Only to merger | The merger receives a single synthetic mount containing every completed executor's full output. |
