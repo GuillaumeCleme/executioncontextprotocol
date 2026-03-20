@@ -28,6 +28,7 @@ function bumpFile(path) {
   // Keep internal workspace dependency ranges aligned for npm publishes.
   const internal = [
     "@executioncontrolprotocol/spec",
+    "@executioncontrolprotocol/plugins",
     "@executioncontrolprotocol/runtime",
     "@executioncontrolprotocol/cli",
   ];

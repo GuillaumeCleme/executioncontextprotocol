@@ -6,9 +6,5 @@
     "rootDir": "src"
   },
   "include": ["src/**/*.ts"],
-  "references": [
-    { "path": "../spec" },
-    { "path": "../plugins" },
-    { "path": "../runtime" }
-  ]
+  "references": [{ "path": "../spec" }]
 }

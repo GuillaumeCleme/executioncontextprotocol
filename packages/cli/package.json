@@ -38,6 +38,7 @@
     "start": "node ./bin/dev.js"
   },
   "dependencies": {
+    "@executioncontrolprotocol/plugins": "^0.4.1",
     "@executioncontrolprotocol/runtime": "^0.4.1",
     "@oclif/core": "^4.10.0",
     "ora": "^8.1.1"

@@ -38,7 +38,7 @@ import { createPolicyEnforcer } from "../policies/enforcer.js";
 import type { PolicyEnforcer } from "../policies/types.js";
 import type { TraceCollector } from "../tracing/collector.js";
 import type { ExtensionRegistry } from "../extensions/registry.js";
-import type { MemoryStoreLike } from "./types.js";
+import type { MemoryStore } from "./types.js";
 
 /**
  * Options for a single Context execution.
@@ -560,7 +560,7 @@ export class ECPEngine {
     parentSpanId?: string,
   ): Promise<ChatMessage[]> {
     const results: ChatMessage[] = [];
-    const store = this.config.memoryStore as MemoryStoreLike | undefined;
+    const store = this.config.memoryStore as MemoryStore | undefined;
     const memoryScope = executor.memory?.scope;
     const allowRead = executor.policies?.memoryAccess?.allowRead === true;
     const allowWrite = executor.policies?.memoryAccess?.allowWrite === true;
@@ -893,7 +893,7 @@ export class ECPEngine {
       .join("\n\n");
 
     let memoryBlock = "";
-    const store = this.config.memoryStore as MemoryStoreLike | undefined;
+    const store = this.config.memoryStore as MemoryStore | undefined;
     if (
       store &&
       executor.memory &&
@@ -944,7 +944,7 @@ export class ECPEngine {
   ): Promise<ToolDefinition[]> {
     const tools: ToolDefinition[] = [];
 
-    const store = this.config.memoryStore as MemoryStoreLike | undefined;
+    const store = this.config.memoryStore as MemoryStore | undefined;
     if (store && executor.memory) {
       const allowRead = executor.policies?.memoryAccess?.allowRead === true;
       const allowWrite = executor.policies?.memoryAccess?.allowWrite === true;

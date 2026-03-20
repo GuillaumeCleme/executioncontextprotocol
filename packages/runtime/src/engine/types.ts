@@ -11,67 +11,17 @@ import type {
   ECPContext,
   Executor,
   PluginSecurityPolicy,
-  MemoryScope,
   MountStage,
 } from "@executioncontrolprotocol/spec";
+import type {
+  ExecutionProgressEvent,
+  MemoryStore,
+  ProgressCallback,
+  RunStatus,
+} from "@executioncontrolprotocol/plugins";
 import type { ExtensionRegistry } from "../extensions/registry.js";
 
-// ---------------------------------------------------------------------------
-// Memory (optional long-term store)
-// ---------------------------------------------------------------------------
-
-/**
- * Minimal memory record shape used by the engine when injecting memory.
- *
- * @category Engine
- */
-export interface MemoryRecordLike {
-  id: string;
-  scope: MemoryScope;
-  executorName: string;
-  summary: string;
-  payload?: Record<string, unknown>;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
- * Minimal memory store contract used by the engine. Implementations
- * are provided by the memory plugin (e.g. SQLite store).
- *
- * @category Engine
- */
-export interface MemoryStoreLike {
-  get(
-    scope: MemoryScope,
-    options?: {
-      maxItems?: number;
-      maxTokens?: number;
-      executorName?: string;
-      summariesOnly?: boolean;
-    },
-  ): Promise<MemoryRecordLike[]>;
-
-  put(
-    scope: MemoryScope,
-    executorName: string,
-    summary: string,
-    payload?: Record<string, unknown>,
-    id?: string,
-  ): Promise<MemoryRecordLike>;
-
-  list(
-    scope: MemoryScope,
-    options?: { limit?: number; executorName?: string; olderThan?: string },
-  ): Promise<Pick<MemoryRecordLike, "id" | "summary" | "createdAt">[]>;
-
-  delete(
-    scope: MemoryScope,
-    options?: { id?: string; ids?: string[]; olderThan?: string; executorName?: string },
-  ): Promise<{ deleted: number }>;
-
-  close(): Promise<void>;
-}
+export type { ExecutionProgressEvent, MemoryStore, ProgressCallback, RunStatus };
 
 // ---------------------------------------------------------------------------
 // Inputs
@@ -136,25 +86,6 @@ export interface MountOutput {
 // ---------------------------------------------------------------------------
 // Execution state
 // ---------------------------------------------------------------------------
-
-/**
- * Lifecycle status of an execution run.
- *
- * @category Engine
- */
-export type RunStatus =
-  | "pending"
-  | "loading"
-  | "validating"
-  | "hydrating-seed"
-  | "running-orchestrator"
-  | "delegating"
-  | "hydrating-focus"
-  | "hydrating-deep"
-  | "running-specialist"
-  | "merging"
-  | "completed"
-  | "failed";
 
 /**
  * A log entry recorded during execution.
@@ -300,51 +231,6 @@ export interface ExecutionResult {
 // ---------------------------------------------------------------------------
 
 /**
- * Execution progress event emitted during a run for real-time UI (e.g. CLI spinner).
- *
- * @category Engine
- */
-export type ExecutionProgressEvent =
-  | { type: "phase"; status: RunStatus }
-  | {
-      type: "step_start";
-      step: number;
-      kind: "mount" | "executor" | "model" | "tool" | "delegation";
-      executorName?: string;
-      description: string;
-    }
-  | {
-      type: "step_complete";
-      step: number;
-      kind: "mount" | "executor" | "model" | "tool" | "delegation";
-      executorName?: string;
-      description: string;
-      durationMs: number;
-      /** Chain-of-thought or reasoning from the model when available. */
-      reasoning?: string;
-      /** Executor output when kind is "executor" and the executor produced output. */
-      output?: unknown;
-      /** Token usage for this step (when kind is "executor", from model generation). */
-      tokens?: { prompt: number; completion: number; total: number };
-      /** Model used (when kind is "executor"). */
-      model?: string;
-    }
-  | {
-      type: "executor_reasoning";
-      executorName: string;
-      /** Increment or full reasoning text (chain of thought). */
-      reasoning: string;
-    };
-
-/**
- * Callback invoked for each progress event during execution.
- * May return a Promise so the host can flush output before the next event.
- *
- * @category Engine
- */
-export type ProgressCallback = (event: ExecutionProgressEvent) => void | Promise<void>;
-
-/**
  * Configuration for tool servers the engine should connect to.
  * Maps logical server names (as used in mount definitions) to
  * connection details.
@@ -393,7 +279,7 @@ export interface EngineConfig {
    * memory (and have memoryAccess policy) can read/write via injected
    * context and tools.
    */
-  memoryStore?: MemoryStoreLike;
+  memoryStore?: MemoryStore;
 
   /**
    * Optional callback for real-time execution progress (phase, steps, reasoning).

@@ -16,14 +16,18 @@ import {
   TraceCollector,
   ConsoleTraceExporter,
   JsonFileTraceExporter,
-  type ProgressCallback,
   type ECPSystemConfig,
   getSystemPluginPolicy,
 } from "@executioncontrolprotocol/runtime";
 
 import type { ECPContext, Orchestrator, Executor } from "@executioncontrolprotocol/spec";
 import { getContextPlugins } from "@executioncontrolprotocol/spec";
-import type { ModelProvider, MemoryStoreLike } from "@executioncontrolprotocol/runtime";
+import type {
+  MemoryPluginInstance,
+  ModelProvider,
+  MemoryStore,
+  ProgressCallback,
+} from "@executioncontrolprotocol/plugins";
 
 import { parseKeyValueInputs, splitCommaSeparated } from "../lib/parsing.js";
 import { createProgressHandler } from "../lib/progress.js";
@@ -266,14 +270,12 @@ export default class Run extends Command {
     }
 
     // Keep memory-store lifecycle in the CLI so we can close it after a run.
-    let memoryStore: MemoryStoreLike | undefined;
+    let memoryStore: MemoryStore | undefined;
     if (contextHasMemory(context)) {
       const pluginReg = registry.listPlugins().find((p) => p.id === "memory");
       if (pluginReg) {
         try {
-          const instance = pluginReg.create(getContextPlugins(context)?.config?.memory as Record<string, unknown>) as {
-            open(): Promise<MemoryStoreLike>;
-          };
+          const instance = pluginReg.create(getContextPlugins(context)?.config?.memory as Record<string, unknown>) as MemoryPluginInstance;
           memoryStore = await instance.open();
         } catch (err) {
           if (flags.debug) {

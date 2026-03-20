@@ -15,6 +15,7 @@ export type {
   MemoryStore,
   SqliteMemoryStoreConfig,
 } from "./types.js";
+export type { MemoryPluginInstance } from "@executioncontrolprotocol/plugins";
 export { createSqliteMemoryStore } from "./sqlite-memory-store.js";
 
 import type { ExtensionVersion } from "@executioncontrolprotocol/spec";
@@ -22,17 +23,6 @@ import type { ExtensionRegistry } from "../../extensions/registry.js";
 import type { MemoryStore } from "./types.js";
 import { createSqliteMemoryStore } from "./sqlite-memory-store.js";
 import type { SqliteMemoryStoreConfig } from "./types.js";
-
-/**
- * Factory returned by the memory plugin's create(). The host calls open()
- * once to obtain the store (async because sql.js loads wasm).
- *
- * @category Plugins
- */
-export interface MemoryPluginInstance {
-  /** Open the store (load DB from disk if present). */
-  open(): Promise<MemoryStore>;
-}
 
 /**
  * Register the built-in memory plugin in the extension registry.

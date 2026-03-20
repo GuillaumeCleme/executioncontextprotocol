@@ -23,9 +23,9 @@ export default class ConfigPluginsGet extends Command {
       this.log(`# ${path}${exists ? "" : " (no file — empty)"}\n`);
       const ex = getSystemPluginPolicy(config);
       this.log("allowEnable:");
-      this.log(ex?.allowEnable?.length ? ex.allowEnable.map((x) => `  - ${x}`).join("\n") : "  (not set)");
+      this.log(ex?.allowEnable?.length ? ex.allowEnable.map((x: string) => `  - ${x}`).join("\n") : "  (not set)");
       this.log("defaultEnable:");
-      this.log(ex?.defaultEnable?.length ? ex.defaultEnable.map((x) => `  - ${x}`).join("\n") : "  (not set)");
+      this.log(ex?.defaultEnable?.length ? ex.defaultEnable.map((x: string) => `  - ${x}`).join("\n") : "  (not set)");
       this.log("security:");
       if (ex?.security) {
         this.log(JSON.stringify(ex.security, null, 2));

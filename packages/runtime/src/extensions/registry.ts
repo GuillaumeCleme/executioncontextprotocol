@@ -9,8 +9,7 @@ import type {
   ModelProviderRegistration,
   PluginRegistration,
 } from "./types.js";
-import type { ModelProvider } from "../providers/model-provider.js";
-import type { ProgressCallback } from "../engine/types.js";
+import type { ModelProvider, ProgressCallback } from "@executioncontrolprotocol/plugins";
 
 /**
  * In-memory registry of runtime extension factories.

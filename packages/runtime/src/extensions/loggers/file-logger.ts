@@ -8,7 +8,7 @@
 import { appendFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { homedir } from "node:os";
-import type { ExecutionProgressEvent, ProgressCallback } from "../../engine/types.js";
+import type { ExecutionProgressEvent, ProgressCallback } from "@executioncontrolprotocol/plugins";
 
 /**
  * Configuration for the built-in file logger (`id: file`).

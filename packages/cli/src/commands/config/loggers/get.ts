@@ -22,9 +22,9 @@ export default class ConfigLoggersGet extends Command {
       this.log(`# ${path}${exists ? "" : " (no file — empty)"}\n`);
       const loggers = config.loggers;
       this.log("allowEnable:");
-      this.log(loggers?.allowEnable?.length ? loggers.allowEnable.map((x) => `  - ${x}`).join("\n") : "  (not set)");
+      this.log(loggers?.allowEnable?.length ? loggers.allowEnable.map((x: string) => `  - ${x}`).join("\n") : "  (not set)");
       this.log("defaultEnable:");
-      this.log(loggers?.defaultEnable?.length ? loggers.defaultEnable.map((x) => `  - ${x}`).join("\n") : "  (not set)");
+      this.log(loggers?.defaultEnable?.length ? loggers.defaultEnable.map((x: string) => `  - ${x}`).join("\n") : "  (not set)");
       this.log("config keys:");
       this.log(loggers?.config ? Object.keys(loggers.config).map((k) => `  - ${k}`).join("\n") : "  (not set)");
     } catch (err) {

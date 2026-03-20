@@ -11,6 +11,8 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const paths = [
   "packages/spec/dist",
   "packages/spec/tsconfig.tsbuildinfo",
+  "packages/plugins/dist",
+  "packages/plugins/tsconfig.tsbuildinfo",
   "packages/runtime/dist",
   "packages/runtime/tsconfig.tsbuildinfo",
   "packages/cli/dist",

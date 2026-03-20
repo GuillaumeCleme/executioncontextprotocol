@@ -293,6 +293,12 @@ See also the [full specification](SPEC.md) and the
 Plugin registration and loader architecture are documented in
 [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
+**Plugin authors (TypeScript):** install [`@executioncontrolprotocol/plugins`](https://www.npmjs.com/package/@executioncontrolprotocol/plugins) for manifest types plus runtime contracts (`ModelProvider`, `MemoryStore`, `ProgressCallback`, extension registration shapes) without depending on the full engine. Example:
+
+```ts
+import type { PluginReference, ModelProvider, PluginRegistration } from "@executioncontrolprotocol/plugins";
+```
+
 ------------------------------------------------------------------------
 
 ## Hello World
@@ -363,6 +369,7 @@ See [`examples/single-executor/context.yaml`](examples/single-executor/context.y
 | **[`SETUP.md`](SETUP.md)** | **Setup guide: install, CLI (global), env vars, Ollama, system config, docs** |
 | [`config/`](config/) | Example system config (`ecp.config.example.yaml`) — allow-list plugins and security; use with `--config` or copy to `./ecp.config.yaml` / `~/.ecp/config.yaml` |
 | [`packages/spec/`](packages/spec/) | TypeScript types, JSON Schema, validators |
+| [`packages/plugins/`](packages/plugins/) | Publishable plugin + manifest types for contributors (`@executioncontrolprotocol/plugins` on npm) |
 | [`packages/runtime/`](packages/runtime/) | Execution engine, providers, protocols |
 | [`packages/cli/`](packages/cli/) | CLI tool (`ecp run` / `ecp validate`) |
 | [`packages/docs/`](packages/docs/) | TypeDoc documentation generator |
