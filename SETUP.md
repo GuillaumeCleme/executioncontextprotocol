@@ -47,7 +47,7 @@ npm run build
 
 ```bash
 npx ecp validate spec.yaml --input shopifyStoreId=test --input jiraProject=TEST
-npx ecp run examples/single-executor/context.yaml --enable openai -i topic="Getting started"
+npx ecp run examples/single-executor/context.yaml --provider ollama --model gemma3:1b --enable ollama -i topic="Getting started"
 ```
 
 **Option B — global `ecp` command:** link the CLI (compiled `dist/`; no global `tsx` required):
@@ -168,13 +168,13 @@ Lighter alternative: `ollama pull llama3.2:1b`. Other options with good tool sup
 3. Run ECP with the Ollama provider:
 
    ```bash
-   ecp run examples/single-executor/context.yaml --provider ollama --enable ollama --model llama3.2:3b -i topic="Test"
+   ecp run examples/single-executor/context.yaml --provider ollama --enable ollama --model gemma3:1b -i topic="Test"
    ```
 
    If you didn’t link the CLI, from the repo root (after `npm run build`):
 
    ```bash
-   npx ecp run examples/single-executor/context.yaml --provider ollama --enable ollama --model llama3.2:3b -i topic="Test"
+   npx ecp run examples/single-executor/context.yaml --provider ollama --enable ollama --model gemma3:1b -i topic="Test"
    ```
 
 ------------------------------------------------------------------------

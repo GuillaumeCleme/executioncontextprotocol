@@ -9,12 +9,15 @@ Given a `topic` input, the `summarizer` executor calls the LLM once and produces
 ## Run it
 
 ```bash
-# From the repo root
+# From the repo root (Ollama must be running; default model gemma3:1b)
 ecp run examples/single-executor/context.yaml \
+  --provider ollama \
+  --model gemma3:1b \
+  --enable ollama \
   --input topic="Execution Control Protocol" \
   --debug
 ```
 
 ## Requirements
 
-- `OPENAI_API_KEY` environment variable set
+- [Ollama](https://ollama.com/) installed and running, with the model you pass to `--model` pulled (e.g. `ollama pull gemma3:1b`).

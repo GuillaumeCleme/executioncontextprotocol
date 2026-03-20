@@ -4,12 +4,12 @@ kind: Context
 metadata:
   name: research-report
   version: 1.0.0
-  description: Controller-specialist example — orchestrate research across two specialists
+  description: Controller-specialist example — orchestrate research across two specialists (Ollama, default gemma3:1b)
 
 extensions:
   version: 1.0.0
   providers:
-    - name: openai
+    - name: ollama
       kind: model-provider
       type: builtin
       version: 0.3.0
@@ -120,10 +120,10 @@ executors:
     type: agent
     model:
       provider:
-        name: openai
+        name: ollama
         type: builtin
         version: 0.3.0
-      name: gpt-4o-mini
+      name: gemma3:1b
     instructions: |
       You are a research orchestrator.
       Given a subject and depth, produce a Plan that:
@@ -146,10 +146,10 @@ executors:
     type: agent
     model:
       provider:
-        name: openai
+        name: ollama
         type: builtin
         version: 0.3.0
-      name: gpt-4o-mini
+      name: gemma3:1b
     instructions: |
       You are a technical analyst.
       Given a research task, produce TechnicalFindings with a summary and key technical points.
@@ -169,10 +169,10 @@ executors:
     type: agent
     model:
       provider:
-        name: openai
+        name: ollama
         type: builtin
         version: 0.3.0
-      name: gpt-4o-mini
+      name: gemma3:1b
     instructions: |
       You are a practical applications analyst.
       Given a research task, produce PracticalFindings with a summary and real-world applications.
@@ -192,10 +192,10 @@ executors:
     type: agent
     model:
       provider:
-        name: openai
+        name: ollama
         type: builtin
         version: 0.3.0
-      name: gpt-4o-mini
+      name: gemma3:1b
     instructions: |
       You are a report publisher.
       Merge the technical and practical findings into a cohesive Report.

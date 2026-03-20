@@ -40,7 +40,7 @@ npm run build
 **Run an example:**
 
 ```bash
-ecp run examples/single-executor/context.yaml --enable openai -i topic="ECP"
+ecp run examples/single-executor/context.yaml --provider ollama --model gemma3:1b --enable ollama -i topic="ECP"
 ```
 
 **Validate a Context:**
