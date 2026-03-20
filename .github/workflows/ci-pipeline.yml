@@ -1,0 +1,134 @@
+# Reusable CI pipeline: build, lint, validate, tests, and (on main push only) npm publish.
+# Called from `ci.yml`.
+
+name: ci
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build (spec → schema → runtime → cli)
+        run: npm run build
+      - name: Lint (ESLint + markdownlint)
+        run: npm run lint
+      - name: Validate spec
+        run: npm run validate
+      - name: CLI smoke test
+        run: npx ecp validate spec.yaml --input shopifyStoreId=test --input jiraProject=TEST
+
+  unit:
+    name: unit
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build packages (dist for tests)
+        run: npm run build
+      - name: Run unit tests
+        run: npm run test:unit
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: coverage/
+          retention-days: 7
+
+  integration:
+    name: integration
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build packages (dist for tests)
+        run: npm run build
+      - name: Run integration tests
+        run: npm run test:integration
+
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build packages (dist for tests)
+        run: npm run build
+      - name: Install Ollama
+        run: curl -fsSL https://ollama.com/install.sh | sh
+      - name: Start Ollama server
+        run: ollama serve &
+      - name: Wait for Ollama
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:11434/api/tags > /dev/null 2>&1 && break
+            sleep 1
+          done
+      - name: Pull model
+        run: ollama pull gemma3:1b
+      - name: Run E2E tests
+        env:
+          OLLAMA_MODEL: gemma3:1b
+        run: npm run test:e2e
+
+  publish:
+    name: publish
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs: [build, unit, integration, e2e]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - name: Build (spec → schema → runtime → cli)
+        run: npm run build
+      - name: Publish @executioncontrolprotocol/spec
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --workspace=@executioncontrolprotocol/spec --access public
+      - name: Wait for registry (avoid race before runtime publish)
+        run: sleep 10
+      - name: Publish @executioncontrolprotocol/runtime
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --workspace=@executioncontrolprotocol/runtime --access public
+      - name: Wait for registry
+        run: sleep 10
+      - name: Publish @executioncontrolprotocol/cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --workspace=@executioncontrolprotocol/cli --access public

@@ -7,7 +7,7 @@ This is a **monorepo** for the Execution Control Protocol (ECP), using npm works
 ### Repository structure
 
 | Path | Purpose |
-|---|---|
+| ---- | ------- |
 | `packages/spec/` | TypeScript types, JSON Schema generation, spec validation |
 | `packages/runtime/` | ECP execution engine (providers, protocols, mounts, policies) |
 | `packages/cli/` | CLI tool: `ecp run` and `ecp validate` |
@@ -18,7 +18,7 @@ This is a **monorepo** for the Execution Control Protocol (ECP), using npm works
 ### NPM scripts (run from repo root)
 
 | Command | What it does |
-|---|---|
+| ------- | ------------ |
 | `npm run build` | TypeScript type-check all packages (spec → runtime → cli) |
 | `npm run generate:schema` | Generate JSON Schema from spec types |
 | `npm run lint` | ESLint + markdownlint |
@@ -27,6 +27,7 @@ This is a **monorepo** for the Execution Control Protocol (ECP), using npm works
 | `npm run docs:typedoc` | Build TypeDoc API reference in packages/docs/dist |
 | `npm run check` | Full suite: build + generate:schema + lint + validate + test |
 | `npm run test:e2e` | E2E tests with real Ollama model (requires running Ollama) |
+| `npm run test:coverage` | Run tests with coverage report; target minimum 90% |
 
 ### Running the CLI
 
@@ -58,3 +59,8 @@ ecp validate examples/controller-specialist/context.yaml --input subject=test
 - **E2E tests auto-skip** when Ollama is not running — safe in `npm run test` and `npm run check`.
 - **CI E2E job** installs Ollama + `gemma3:1b` on every push/PR; runs `npm run test:e2e`.
 - **No emojis.** Do not add emoji characters anywhere in the codebase (source, CLI output, logs, or comments).
+
+### Testing
+
+- **Always include tests for new features.** Every new feature or behavior change must have corresponding unit or integration tests.
+- **Minimum test coverage: 90%.** The project targets at least 90% coverage (lines, functions, branches, statements). Run `npm run test:coverage` to view the report. Add or update tests when adding code to maintain or reach this target. Threshold enforcement in CI can be enabled once coverage meets 90%.

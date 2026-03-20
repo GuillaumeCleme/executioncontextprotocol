@@ -121,9 +121,12 @@ export class TraceCollector {
     success: boolean;
     error?: string;
   }): ExecutionTrace {
+    // Spans are appended on endSpan(), so array order is completion order (children
+    // before parents). Sort by step (assigned at startSpan) for chronological order.
+    const spans = [...this.spans].sort((a, b) => a.step - b.step);
     return {
       ...meta,
-      spans: [...this.spans],
+      spans,
     };
   }
 
