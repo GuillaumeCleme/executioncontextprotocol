@@ -17,4 +17,3 @@ npm install @executioncontrolprotocol/spec
 
 - **Repo**: `https://github.com/executioncontrolprotocol/executioncontrolprotocol`
 - **Issues**: `https://github.com/executioncontrolprotocol/executioncontrolprotocol/issues`
-

@@ -69,43 +69,49 @@ Dev without rebuilding (TypeScript source): `npm run start --workspace=@executio
 
 ## Tool servers (MCP) and tool permissions
 
-ECP connects to MCP servers at runtime. The CLI supports two concerns:
+ECP connects to MCP servers at runtime. The CLI no longer accepts `--tool-server` / `--tool-allow` flags; instead:
 
-- **Tool server wiring** (how to start/connect to MCP servers)
-- **Tool permissions** (which executors are allowed to call which tools)
+- **Tool server wiring** comes from your global `ecp.config.yaml` under `toolServers:`.
+- **Tool permissions** come from each Context manifest under `policies.toolAccess`.
 
-### Tool server wiring
+### Tool server wiring (`ecp.config.yaml` -> `toolServers`)
 
-Prefer the simple, repeatable `--tool-server` flag:
+For example, to connect a `fetch` tool server via stdio (Docker) and a `remote` tool server via SSE:
 
-- **stdio**: `--tool-server name=stdio:command[,arg1,arg2...]`
-- **sse**: `--tool-server name=sse:url`
+```yaml
+toolServers:
+  fetch:
+    transport:
+      type: stdio
+      command: docker
+      args: [run, -i, --rm, mcp/fetch]
 
-Examples:
-
-```bash
-ecp run ctx.yaml ^
-  --tool-server fetch=stdio:docker,run,-i,--rm,mcp/fetch
+  remote:
+    transport:
+      type: sse
+      url: https://example.com/sse
 ```
 
-```bash
-ecp run ctx.yaml ^
-  --tool-server remote=sse:https://example.com/sse
-```
-
-### Tool permissions (per-executor allow-lists)
-
-Prefer the simple, repeatable `--tool-allow` flag:
-
-- `--tool-allow executor=server:tool[,server:tool...]`
-
-Example:
+Then you can run without tool-specific CLI flags:
 
 ```bash
-ecp run ctx.yaml ^
-  --tool-server fetch=stdio:docker,run,-i,--rm,mcp/fetch ^
-  --tool-allow web_summarizer=fetch:fetch
+ecp run ctx.yaml --enable openai -i topic="..."
 ```
+
+### Tool permissions (`Context` -> `policies.toolAccess`)
+
+Tool permissions are defined per-executor in the Context spec. For example:
+
+```yaml
+policies:
+  toolAccess:
+    default: deny
+    allow:
+      - fetch:fetch
+      - fetch:search
+```
+
+The allowed tool refs (like `fetch:fetch`) must use the same `server` name you configure in `ecp.config.yaml` under `toolServers`.
 
 ------------------------------------------------------------------------
 
@@ -211,13 +217,11 @@ See [`config/ecp.config.example.yaml`](config/ecp.config.example.yaml) for `allo
 
 ## Quick Reference
 
-| Goal              | Command / step |
-|-------------------|----------------|
-| Install deps      | `npm install` or `pnpm install` |
-| Link `ecp` CLI    | `npm run build` then `npm link` from `packages/cli` |
-| Run a Context     | `ecp run <context.yaml> --enable openai -i key=value` |
-| Validate          | `ecp validate <context.yaml>` |
-| Use OpenAI        | Set `OPENAI_API_KEY` |
-| Use Ollama        | Install [Ollama](https://ollama.com/), `ollama pull llama3.2:3b`, then `--provider ollama --enable ollama --model llama3.2:3b` |
-| System config     | Copy `config/ecp.config.example.yaml` to `./ecp.config.yaml` or use `--config <path>` |
-| Global `ecp`      | `npm run build` then `npm link` from `packages/cli` |
+- **Install deps:** `npm install` or `pnpm install`
+- **Link `ecp` CLI:** `npm run build` then `npm link` from `packages/cli`
+- **Run a Context:** `ecp run <context.yaml> --enable openai -i key=value`
+- **Validate:** `ecp validate <context.yaml>`
+- **Use OpenAI:** set `OPENAI_API_KEY`
+- **Use Ollama:** install [Ollama](https://ollama.com/), `ollama pull llama3.2:3b`, then `--provider ollama --enable ollama --model llama3.2:3b`
+- **System config:** copy `config/ecp.config.example.yaml` to `./ecp.config.yaml` or use `--config <path>`
+- **Global `ecp`:** `npm run build` then `npm link` from `packages/cli`

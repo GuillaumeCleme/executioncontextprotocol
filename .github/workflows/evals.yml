@@ -1,4 +1,4 @@
-name: Evals
+name: evals
 
 on:
   workflow_dispatch:
@@ -24,7 +24,7 @@ permissions:
 
 jobs:
   eval:
-    name: Run Eval Suite
+    name: eval
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -65,7 +65,7 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          npx tsx packages/cli/src/index.ts run \
+          npx ecp run \
             examples/single-executor/context.yaml \
             --input topic="Execution Control Protocol" \
             --provider ${{ inputs.provider || 'ollama' }} \
@@ -76,7 +76,7 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          npx tsx packages/cli/src/index.ts run \
+          npx ecp run \
             examples/controller-specialist/context.yaml \
             --input subject="Model Context Protocol" \
             --provider ${{ inputs.provider || 'ollama' }} \

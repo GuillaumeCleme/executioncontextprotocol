@@ -357,7 +357,7 @@ See [`examples/single-executor/context.yaml`](examples/single-executor/context.y
 ## Repository Structure
 
 | Path | Description |
-|---|---|
+| ---- | ----------- |
 | [`spec.yaml`](spec.yaml) | Canonical example Context manifest |
 | [`SPEC.md`](SPEC.md) | Full protocol specification |
 | **[`SETUP.md`](SETUP.md)** | **Setup guide: install, CLI (global), env vars, Ollama, system config, docs** |
