@@ -4,18 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       model:
-        description: "Model to use for evaluation"
+        description: "Ollama model tag (must match pulled image)"
         required: false
         default: "gemma3:1b"
         type: string
-      provider:
-        description: "Provider: ollama or openai"
-        required: false
-        default: "ollama"
-        type: choice
-        options:
-          - ollama
-          - openai
   schedule:
     - cron: "0 6 * * *"
 
@@ -27,6 +19,9 @@ jobs:
     name: eval
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      # workflow_dispatch has github.event.inputs; scheduled runs do not — defaults apply.
+      EVAL_MODEL: ${{ github.event.inputs.model || 'gemma3:1b' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -42,15 +37,12 @@ jobs:
         run: npm run build
 
       - name: Install Ollama
-        if: inputs.provider != 'openai'
         run: curl -fsSL https://ollama.com/install.sh | sh
 
       - name: Start Ollama server
-        if: inputs.provider != 'openai'
         run: ollama serve &
 
       - name: Wait for Ollama
-        if: inputs.provider != 'openai'
         run: |
           for i in $(seq 1 30); do
             curl -sf http://localhost:11434/api/tags > /dev/null 2>&1 && break
@@ -58,29 +50,30 @@ jobs:
           done
 
       - name: Pull model
-        if: inputs.provider != 'openai'
-        run: ollama pull ${{ inputs.model || 'gemma3:1b' }}
+        run: ollama pull "$EVAL_MODEL"
 
       - name: Run single-executor eval
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OLLAMA_MODEL: ${{ env.EVAL_MODEL }}
         run: |
           npx ecp run \
             examples/single-executor/context.yaml \
             --input topic="Execution Control Protocol" \
-            --provider ${{ inputs.provider || 'ollama' }} \
-            --model ${{ inputs.model || 'gemma3:1b' }} \
+            --provider ollama \
+            --model "$EVAL_MODEL" \
+            --enable ollama \
             --debug
 
       - name: Run controller-specialist eval
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OLLAMA_MODEL: ${{ env.EVAL_MODEL }}
         run: |
           npx ecp run \
             examples/controller-specialist/context.yaml \
             --input subject="Model Context Protocol" \
-            --provider ${{ inputs.provider || 'ollama' }} \
-            --model ${{ inputs.model || 'gemma3:1b' }} \
+            --provider ollama \
+            --model "$EVAL_MODEL" \
+            --enable ollama \
             --debug
 
       - name: Upload eval artifacts
