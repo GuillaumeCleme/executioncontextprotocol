@@ -73,10 +73,10 @@ describe("TraceCollector", () => {
     expect(trace.spans.length).toBe(4);
   });
 
-  it("assigns sequential step numbers", () => {
+  it("orders spans chronologically (by step start order)", () => {
     const trace = buildSampleTrace();
     const steps = trace.spans.map((s) => s.step);
-    expect(steps).toEqual([2, 3, 4, 1]);
+    expect(steps).toEqual([1, 2, 3, 4]);
   });
 
   it("captures model generation details", () => {
