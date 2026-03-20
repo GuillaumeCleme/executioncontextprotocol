@@ -5,7 +5,7 @@
 Ruleset for the **`development`** branch:
 
 - **Pull requests** — Changes must go through a PR before merging into `development`.
-- **Required status checks** — The CI jobs listed in the file must succeed first (names must match the checks shown on a pull request).
+- **Restrict updates** — Only actors with bypass permission can push directly to `development` (everyone else must land changes via PR merge). Set bypass in the ruleset UI if specific accounts should be allowed to push.
 
 ## `protect-main.json`
 

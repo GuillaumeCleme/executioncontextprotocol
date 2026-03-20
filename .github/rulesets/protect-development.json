@@ -21,22 +21,28 @@
       }
     },
     {
+      "type": "update",
+      "parameters": {
+        "update_allows_fetch_and_merge": true
+      }
+    },
+    {
       "type": "required_status_checks",
       "parameters": {
         "strict_required_status_checks_policy": true,
         "do_not_enforce_on_create": false,
         "required_status_checks": [
           {
-            "context": "CI / Build · Lint · Validate"
+            "context": "CI / pipeline / Build · Lint · Validate"
           },
           {
-            "context": "CI / Unit Tests"
+            "context": "CI / pipeline / Unit Tests"
           },
           {
-            "context": "CI / Integration Tests"
+            "context": "CI / pipeline / Integration Tests"
           },
           {
-            "context": "CI / E2E Tests (Ollama)"
+            "context": "CI / pipeline / E2E Tests (Ollama)"
           }
         ]
       }
