@@ -15,7 +15,7 @@ import { EnvSecretProvider } from "./providers/env-secret-provider.js";
 import { OsKeychainSecretProvider } from "./providers/os-keychain-secret-provider.js";
 
 export interface BuiltinSecretRegistrationOptions {
-  /** Absolute or cwd-relative path to `.env` for the `dotenv` provider. */
+  /** Absolute or cwd-relative path to `.env` for the `dot` provider. */
   dotenvPath?: string;
   /** Current working directory for default `.env` resolution. */
   cwd?: string;

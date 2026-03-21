@@ -5,6 +5,12 @@
  */
 
 export { ECP_KEYRING_ACCOUNT_PREFIX, ECP_KEYRING_SERVICE } from "./constants.js";
+export {
+  DOT_PROVIDER_ID,
+  ENV_PROVIDER_ID,
+  OS_PROVIDER_ID,
+  SESSION_PROVIDER_ID,
+} from "./provider-ids.js";
 export { normalizeOsKeychainAccountKey } from "./os-keychain-account-key.js";
 export { redactSecret } from "./redaction.js";
 export { DefaultSecretBroker } from "./broker.js";
@@ -33,7 +39,4 @@ export type {
 export { EnvSecretProvider } from "./providers/env-secret-provider.js";
 export { DotenvSecretProvider } from "./providers/dotenv-secret-provider.js";
 export { CliSessionSecretProvider } from "./providers/cli-session-secret-provider.js";
-export {
-  OsKeychainSecretProvider,
-  OS_KEYCHAIN_PROVIDER_ID,
-} from "./providers/os-keychain-secret-provider.js";
+export { OsKeychainSecretProvider } from "./providers/os-keychain-secret-provider.js";

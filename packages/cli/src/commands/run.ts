@@ -34,6 +34,7 @@ import type {
 import { parseKeyValueInputs, splitCommaSeparated } from "../lib/parsing.js";
 import { createProgressHandler } from "../lib/progress.js";
 import { getDefaultTraceDir } from "../lib/ecp-home.js";
+import { resolveDotenvPathFromConfig, resolveSecretPolicyFromConfig } from "../lib/secrets-config.js";
 
 function contextHasMemory(context: ECPContext): boolean {
   const visit = (orchestrator: Orchestrator): boolean => {
@@ -198,10 +199,9 @@ export default class Run extends Command {
       }
     }
 
-    const dotenvRel = systemConfig?.secrets?.providers?.dotenv?.path;
-    const dotenvPath = dotenvRel ? resolve(cwd, dotenvRel) : resolve(cwd, ".env");
+    const dotenvPath = resolveDotenvPathFromConfig(cwd, systemConfig);
     const { broker: secretBroker } = createDefaultSecretBroker({
-      policy: systemConfig?.secrets?.policy ?? "warn",
+      policy: resolveSecretPolicyFromConfig(systemConfig),
       dotenvPath,
       cwd,
     });

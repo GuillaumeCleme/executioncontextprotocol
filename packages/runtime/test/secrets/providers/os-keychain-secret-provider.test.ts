@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-import { OsKeychainSecretProvider, OS_KEYCHAIN_PROVIDER_ID } from "../../../src/secrets/providers/os-keychain-secret-provider.js";
+import { OS_PROVIDER_ID } from "../../../src/secrets/provider-ids.js";
+import { OsKeychainSecretProvider } from "../../../src/secrets/providers/os-keychain-secret-provider.js";
 import { ECP_KEYRING_SERVICE } from "../../../src/secrets/constants.js";
 import type { SecretRef, SecretStoreInput } from "@executioncontrolprotocol/plugins";
 
@@ -47,7 +48,7 @@ describe("OsKeychainSecretProvider", () => {
   });
 
   it("has correct id and display name", () => {
-    expect(provider.id).toBe(OS_KEYCHAIN_PROVIDER_ID);
+    expect(provider.id).toBe(OS_PROVIDER_ID);
     expect(provider.displayName).toBe("OS keychain / credential manager");
   });
 
@@ -68,14 +69,14 @@ describe("OsKeychainSecretProvider", () => {
   it("returns healthy status when available", async () => {
     const health = await provider.healthCheck();
     expect(health.ok).toBe(true);
-    expect(health.providerId).toBe(OS_KEYCHAIN_PROVIDER_ID);
+    expect(health.providerId).toBe(OS_PROVIDER_ID);
   });
 
   it("stores and loads secrets using normalized ecp.* account keys", async () => {
     const input: SecretStoreInput = {
       ref: {
-        id: `ecp://${OS_KEYCHAIN_PROVIDER_ID}/test-key`,
-        provider: OS_KEYCHAIN_PROVIDER_ID,
+        id: `ecp://${OS_PROVIDER_ID}/test-key`,
+        provider: OS_PROVIDER_ID,
         key: "test-key",
       },
       value: "secret-value",
@@ -83,8 +84,8 @@ describe("OsKeychainSecretProvider", () => {
     await provider.store(input);
 
     const ref: SecretRef = {
-      id: `ecp://${OS_KEYCHAIN_PROVIDER_ID}/test-key`,
-      provider: OS_KEYCHAIN_PROVIDER_ID,
+      id: `ecp://${OS_PROVIDER_ID}/test-key`,
+      provider: OS_PROVIDER_ID,
       key: "test-key",
     };
     const result = await provider.load(ref);
@@ -96,8 +97,8 @@ describe("OsKeychainSecretProvider", () => {
 
   it("returns null for missing secret", async () => {
     const ref: SecretRef = {
-      id: `ecp://${OS_KEYCHAIN_PROVIDER_ID}/missing`,
-      provider: OS_KEYCHAIN_PROVIDER_ID,
+      id: `ecp://${OS_PROVIDER_ID}/missing`,
+      provider: OS_PROVIDER_ID,
       key: "missing",
     };
     const result = await provider.load(ref);
@@ -107,8 +108,8 @@ describe("OsKeychainSecretProvider", () => {
   it("deletes secrets", async () => {
     const input: SecretStoreInput = {
       ref: {
-        id: `ecp://${OS_KEYCHAIN_PROVIDER_ID}/delete-test`,
-        provider: OS_KEYCHAIN_PROVIDER_ID,
+        id: `ecp://${OS_PROVIDER_ID}/delete-test`,
+        provider: OS_PROVIDER_ID,
         key: "delete-test",
       },
       value: "to-delete",
@@ -123,16 +124,16 @@ describe("OsKeychainSecretProvider", () => {
   it("lists stored secrets with physical keyring account names", async () => {
     const input1: SecretStoreInput = {
       ref: {
-        id: `ecp://${OS_KEYCHAIN_PROVIDER_ID}/list-key1`,
-        provider: OS_KEYCHAIN_PROVIDER_ID,
+        id: `ecp://${OS_PROVIDER_ID}/list-key1`,
+        provider: OS_PROVIDER_ID,
         key: "list-key1",
       },
       value: "value1",
     };
     const input2: SecretStoreInput = {
       ref: {
-        id: `ecp://${OS_KEYCHAIN_PROVIDER_ID}/list-key2`,
-        provider: OS_KEYCHAIN_PROVIDER_ID,
+        id: `ecp://${OS_PROVIDER_ID}/list-key2`,
+        provider: OS_PROVIDER_ID,
         key: "list-key2",
       },
       value: "value2",
@@ -145,15 +146,15 @@ describe("OsKeychainSecretProvider", () => {
     const keys = list.map((r) => r.key);
     expect(keys).toContain("ecp.list-key1");
     expect(keys).toContain("ecp.list-key2");
-    expect(list.every((r) => r.provider === OS_KEYCHAIN_PROVIDER_ID)).toBe(true);
-    expect(list.every((r) => r.id.startsWith(`ecp://${OS_KEYCHAIN_PROVIDER_ID}/`))).toBe(true);
+    expect(list.every((r) => r.provider === OS_PROVIDER_ID)).toBe(true);
+    expect(list.every((r) => r.id.startsWith(`ecp://${OS_PROVIDER_ID}/`))).toBe(true);
   });
 
   it("uses ECP_KEYRING_SERVICE for storage", async () => {
     const input: SecretStoreInput = {
       ref: {
-        id: `ecp://${OS_KEYCHAIN_PROVIDER_ID}/service-test`,
-        provider: OS_KEYCHAIN_PROVIDER_ID,
+        id: `ecp://${OS_PROVIDER_ID}/service-test`,
+        provider: OS_PROVIDER_ID,
         key: "service-test",
       },
       value: "test",
@@ -168,8 +169,8 @@ describe("OsKeychainSecretProvider", () => {
   it("redacts secret value in preview", async () => {
     const input: SecretStoreInput = {
       ref: {
-        id: `ecp://${OS_KEYCHAIN_PROVIDER_ID}/redact-test`,
-        provider: OS_KEYCHAIN_PROVIDER_ID,
+        id: `ecp://${OS_PROVIDER_ID}/redact-test`,
+        provider: OS_PROVIDER_ID,
         key: "redact-test",
       },
       value: "very-long-secret-value-that-should-be-redacted",

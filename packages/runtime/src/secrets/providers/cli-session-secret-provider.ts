@@ -16,14 +16,15 @@ import {
   listCliSessionKeys,
   putCliSessionSecret,
 } from "../cli-session-store.js";
+import { SESSION_PROVIDER_ID } from "../provider-ids.js";
 import { redactSecret } from "../redaction.js";
 
 /**
  * Ephemeral secrets for the current CLI process (`putCliSessionSecret` / `ecp config secrets add`).
  */
 export class CliSessionSecretProvider implements SecretProvider {
-  readonly id = "cli-session";
-  readonly displayName = "CLI session (ephemeral)";
+  readonly id = SESSION_PROVIDER_ID;
+  readonly displayName = "Session (ephemeral)";
 
   async isAvailable(): Promise<boolean> {
     return true;

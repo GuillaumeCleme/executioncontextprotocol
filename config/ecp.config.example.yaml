@@ -12,12 +12,12 @@
 # Secrets: policy and provider options (secret values live in the OS keyring,
 # env, .env, or ephemeral CLI session — not in this file).
 #
-# ecp config secrets add --provider os-keychain --key server/fetch.token --prompt
+# ecp config secrets add --provider os --key server/fetch.token --prompt
 # secrets:
-#   defaultProvider: os-keychain
+#   defaultProvider: os
 #   policy: warn
 #   providers:
-#     dotenv:
+#     dot:
 #       enabled: true
 #       path: .env
 
@@ -74,7 +74,7 @@ toolServers:
     # credentials:
     #   bindings:
     #     - name: TOKEN
-    #       source: { provider: os-keychain, key: server/fetch.token }
+    #       source: { provider: os, key: server/fetch.token }
     #       required: true
     #       delivery: env
 

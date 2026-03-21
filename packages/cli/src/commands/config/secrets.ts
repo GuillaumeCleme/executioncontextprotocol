@@ -1,17 +1,18 @@
 import { Command } from "@oclif/core";
+import { OS_PROVIDER_ID, SESSION_PROVIDER_ID } from "../../lib/secret-provider-ids.js";
 
 export default class ConfigSecrets extends Command {
-  static summary = "Manage secrets (OS keyring, env, dotenv, CLI session)";
+  static summary = "Manage secrets (os, env, dot, session)";
 
-  static description = `Store and inspect secret values outside config files. Prefer os-keychain on Mac/Windows.
+  static description = `Store and inspect secret values outside config files. Prefer os on Mac/Windows.
 
 Subcommands:
   add|get|remove|list     CRUD-style commands for a provider key
   providers list|doctor   Availability and health`;
 
   static examples = [
-    "ecp config secrets add --provider os-keychain --key server/fetch.token --prompt",
-    "ecp config secrets get --provider os-keychain --key ecp.server.fetch.token",
+    `ecp config secrets add --provider ${OS_PROVIDER_ID} --key server/fetch.token --prompt`,
+    `ecp config secrets get --provider ${OS_PROVIDER_ID} --key ecp.server.fetch.token`,
     "ecp config secrets providers doctor",
   ];
 
@@ -21,7 +22,7 @@ Subcommands:
       [
         "Usage: ecp config secrets <subcommand>",
         "",
-        "  add       Add or replace a secret (os-keychain, cli-session)",
+        `  add       Add or replace a secret (${OS_PROVIDER_ID}, ${SESSION_PROVIDER_ID})`,
         "  get       Read a secret (default: redacted preview)",
         "  remove    Remove a stored secret",
         "  list      List keys (when supported by provider)",

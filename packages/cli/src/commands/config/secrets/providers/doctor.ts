@@ -1,7 +1,6 @@
 import { Command } from "@oclif/core";
-import { resolve } from "node:path";
-
 import { configScopeFlags } from "../../../../lib/config-flags.js";
+import { resolveDotenvPathFromConfig, resolveSecretPolicyFromConfig } from "../../../../lib/secrets-config.js";
 import { loadConfigForDisplay } from "../../../../lib/system-config-cli.js";
 import { createDefaultSecretBroker } from "@executioncontrolprotocol/runtime";
 
@@ -18,10 +17,9 @@ export default class ConfigSecretsProvidersDoctor extends Command {
       cwd,
       explicit: flags.config as string | undefined,
     });
-    const dotenvRel = config.secrets?.providers?.dotenv?.path;
-    const dotenvPath = dotenvRel ? resolve(cwd, dotenvRel) : resolve(cwd, ".env");
+    const dotenvPath = resolveDotenvPathFromConfig(cwd, config);
     const { registry } = createDefaultSecretBroker({
-      policy: config.secrets?.policy ?? "warn",
+      policy: resolveSecretPolicyFromConfig(config),
       dotenvPath,
       cwd,
     });

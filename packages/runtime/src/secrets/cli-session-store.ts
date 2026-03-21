@@ -1,5 +1,5 @@
 /**
- * Ephemeral in-process store for `cli-session` secret provider.
+ * Ephemeral in-process store for the `session` secret provider.
  *
  * @category Secrets
  */

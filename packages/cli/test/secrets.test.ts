@@ -8,15 +8,15 @@ describe("CLI secrets commands (via broker)", () => {
     clearCliSessionSecrets();
   });
 
-  it("stores and retrieves secrets via cli-session provider", async () => {
+  it("stores and retrieves secrets via session provider", async () => {
     const { registry } = createDefaultSecretBroker({ policy: "permissive" });
-    const provider = registry.get("cli-session");
+    const provider = registry.get("session");
     expect(provider).not.toBeNull();
 
     const input = {
       ref: {
-        id: "ecp://cli-session/test-key",
-        provider: "cli-session",
+        id: "ecp://session/test-key",
+        provider: "session",
         key: "test-key",
       } as SecretRef,
       value: "test-secret-value",
@@ -31,21 +31,21 @@ describe("CLI secrets commands (via broker)", () => {
 
   it("lists stored secrets", async () => {
     const { registry } = createDefaultSecretBroker({ policy: "permissive" });
-    const provider = registry.get("cli-session");
+    const provider = registry.get("session");
     expect(provider).not.toBeNull();
 
     await provider!.store!({
       ref: {
-        id: "ecp://cli-session/key1",
-        provider: "cli-session",
+        id: "ecp://session/key1",
+        provider: "session",
         key: "key1",
       } as SecretRef,
       value: "value1",
     });
     await provider!.store!({
       ref: {
-        id: "ecp://cli-session/key2",
-        provider: "cli-session",
+        id: "ecp://session/key2",
+        provider: "session",
         key: "key2",
       } as SecretRef,
       value: "value2",
@@ -60,12 +60,12 @@ describe("CLI secrets commands (via broker)", () => {
 
   it("deletes stored secrets", async () => {
     const { registry } = createDefaultSecretBroker({ policy: "permissive" });
-    const provider = registry.get("cli-session");
+    const provider = registry.get("session");
     expect(provider).not.toBeNull();
 
     const ref: SecretRef = {
-      id: "ecp://cli-session/delete-test",
-      provider: "cli-session",
+      id: "ecp://session/delete-test",
+      provider: "session",
       key: "delete-test",
     };
 
@@ -78,12 +78,12 @@ describe("CLI secrets commands (via broker)", () => {
 
   it("returns null for missing secrets", async () => {
     const { registry } = createDefaultSecretBroker({ policy: "permissive" });
-    const provider = registry.get("cli-session");
+    const provider = registry.get("session");
     expect(provider).not.toBeNull();
 
     const ref: SecretRef = {
-      id: "ecp://cli-session/missing",
-      provider: "cli-session",
+      id: "ecp://session/missing",
+      provider: "session",
       key: "missing",
     };
 
@@ -93,7 +93,7 @@ describe("CLI secrets commands (via broker)", () => {
 
   it("validates provider capabilities", async () => {
     const { registry } = createDefaultSecretBroker({ policy: "permissive" });
-    const provider = registry.get("cli-session");
+    const provider = registry.get("session");
     expect(provider).not.toBeNull();
 
     const caps = provider!.capabilities();

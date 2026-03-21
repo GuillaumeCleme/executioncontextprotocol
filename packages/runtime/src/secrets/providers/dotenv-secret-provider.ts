@@ -11,6 +11,7 @@ import type {
   SecretRef,
   SecretValueResult,
 } from "@executioncontrolprotocol/plugins";
+import { DOT_PROVIDER_ID } from "../provider-ids.js";
 import { redactSecret } from "../redaction.js";
 
 function parseDotEnv(content: string): Record<string, string> {
@@ -37,7 +38,7 @@ function parseDotEnv(content: string): Record<string, string> {
  * Read-only provider: loads from a `.env` file (key = variable name).
  */
 export class DotenvSecretProvider implements SecretProvider {
-  readonly id = "dotenv";
+  readonly id = DOT_PROVIDER_ID;
   readonly displayName = "Dotenv file";
 
   constructor(private readonly filePath: string) {}

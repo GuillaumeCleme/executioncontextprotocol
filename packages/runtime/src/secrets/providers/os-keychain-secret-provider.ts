@@ -14,15 +14,11 @@ import type {
 } from "@executioncontrolprotocol/plugins";
 import { ECP_KEYRING_SERVICE } from "../constants.js";
 import { normalizeOsKeychainAccountKey } from "../os-keychain-account-key.js";
+import { OS_PROVIDER_ID } from "../provider-ids.js";
 import { redactSecret } from "../redaction.js";
 
-/**
- * Stable provider id for config and CLI.
- */
-export const OS_KEYCHAIN_PROVIDER_ID = "os-keychain";
-
 export class OsKeychainSecretProvider implements SecretProvider {
-  readonly id = OS_KEYCHAIN_PROVIDER_ID;
+  readonly id = OS_PROVIDER_ID;
   readonly displayName = "OS keychain / credential manager";
 
   async isAvailable(): Promise<boolean> {

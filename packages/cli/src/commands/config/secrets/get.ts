@@ -1,7 +1,7 @@
 import { Command, Flags } from "@oclif/core";
-import { resolve } from "node:path";
-
 import { configScopeFlags } from "../../../lib/config-flags.js";
+import { OS_PROVIDER_ID } from "../../../lib/secret-provider-ids.js";
+import { resolveDotenvPathFromConfig, resolveSecretPolicyFromConfig } from "../../../lib/secrets-config.js";
 import { loadConfigForDisplay } from "../../../lib/system-config-cli.js";
 import { createDefaultSecretBroker } from "@executioncontrolprotocol/runtime";
 import type { SecretRef } from "@executioncontrolprotocol/plugins";
@@ -18,7 +18,7 @@ export default class ConfigSecretsGet extends Command {
     }),
     key: Flags.string({
       char: "k",
-      description: "Lookup key (os-keychain: same form as add; normalized to ecp.* in the keyring)",
+      description: `Lookup key (${OS_PROVIDER_ID}: same form as add; normalized to ecp.* in the keyring)`,
       required: true,
     }),
     show: Flags.boolean({
@@ -34,10 +34,9 @@ export default class ConfigSecretsGet extends Command {
       cwd,
       explicit: flags.config as string | undefined,
     });
-    const dotenvRel = config.secrets?.providers?.dotenv?.path;
-    const dotenvPath = dotenvRel ? resolve(cwd, dotenvRel) : resolve(cwd, ".env");
+    const dotenvPath = resolveDotenvPathFromConfig(cwd, config);
     const { registry } = createDefaultSecretBroker({
-      policy: config.secrets?.policy ?? "warn",
+      policy: resolveSecretPolicyFromConfig(config),
       dotenvPath,
       cwd,
     });

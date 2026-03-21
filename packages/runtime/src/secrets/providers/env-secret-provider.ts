@@ -9,13 +9,14 @@ import type {
   SecretRef,
   SecretValueResult,
 } from "@executioncontrolprotocol/plugins";
+import { ENV_PROVIDER_ID } from "../provider-ids.js";
 import { redactSecret } from "../redaction.js";
 
 /**
  * Read-only provider: loads from `process.env[ref.key]`.
  */
 export class EnvSecretProvider implements SecretProvider {
-  readonly id = "env";
+  readonly id = ENV_PROVIDER_ID;
   readonly displayName = "Process environment";
 
   async isAvailable(): Promise<boolean> {

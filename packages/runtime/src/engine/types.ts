@@ -359,10 +359,10 @@ export interface ECPSystemConfig {
    * Secret provider defaults and policy (values live in providers, not in this file).
    */
   secrets?: {
-    /** Preferred provider id for interactive commands (e.g. `os-keychain`). */
+    /** Preferred provider id for interactive commands (e.g. `os`). */
     defaultProvider?: string;
 
-    /** How to treat insecure providers (`env`, `dotenv`, `cli-session`). */
+    /** How to treat insecure providers (`env`, `dot`, `session`). */
     policy?: SecretPolicyMode;
 
     /** Per-provider toggles and options. */

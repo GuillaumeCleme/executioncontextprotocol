@@ -1,11 +1,11 @@
 /**
- * Secret provider contracts for ECP (OS keyring, env, dotenv, session, tests).
+ * Secret provider contracts for ECP (built-in providers: `os`, `env`, `dot`, `session`, …).
  *
  * @category Secrets
  */
 
 /**
- * How strictly to treat insecure secret sources (`env`, `dotenv`, `cli-session`).
+ * How strictly to treat insecure secret sources (`env`, `dot`, `session`).
  *
  * @category Secrets
  */
@@ -17,12 +17,12 @@ export type SecretPolicyMode = "permissive" | "warn" | "strict";
  * @category Secrets
  */
 export interface CredentialBindingSource {
-  /** Secret provider id (e.g. `os-keychain`, `env`). */
+  /** Secret provider id (e.g. `os`, `env`). */
   provider: string;
 
   /**
    * Provider-specific lookup key.
-   * For `os-keychain`, use a dotted `ecp.*` name or path segments (e.g. `mcp.github.token` or `server/fetch.token`);
+   * For `os`, use a dotted `ecp.*` name or path segments (e.g. `mcp.github.token` or `server/fetch.token`);
    * the runtime normalizes to a single keyring account under the `ecp.` namespace.
    */
   key: string;
