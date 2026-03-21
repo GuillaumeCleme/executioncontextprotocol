@@ -30,6 +30,11 @@ Meta-commands that are not resource CRUD (e.g. `config init`, `config path`) are
 - Prefer `ecp config tools update` over `… set` when replacing an existing tool server block.
 - System plugin policy lives under **`ecp config plugins`** (not a duplicate `extensions` topic).
 
+## `ecp config secrets`
+
+- Use **`add`** / **`get`** / **`list`** / **`remove`** only (no `set` / `delete` for this topic).
+- **`list`** is allowed here: it enumerates keyring *keys*, not a single resource body (distinct from **`get`** for one secret’s value).
+
 ## Duplicates
 
 Do not add parallel command trees for renamed concepts (e.g. `config extensions` and `config plugins`). One topic per resource; rename in place when terminology changes.

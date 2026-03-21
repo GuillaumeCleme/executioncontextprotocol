@@ -4,7 +4,8 @@
  * @category Secrets
  */
 
-export { ECP_KEYRING_SERVICE } from "./constants.js";
+export { ECP_KEYRING_ACCOUNT_PREFIX, ECP_KEYRING_SERVICE } from "./constants.js";
+export { normalizeOsKeychainAccountKey } from "./os-keychain-account-key.js";
 export { redactSecret } from "./redaction.js";
 export { DefaultSecretBroker } from "./broker.js";
 export { DefaultSecretProviderRegistry } from "./registry.js";

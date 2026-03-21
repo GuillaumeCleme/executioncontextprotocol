@@ -6,12 +6,12 @@ export default class ConfigSecrets extends Command {
   static description = `Store and inspect secret values outside config files. Prefer os-keychain on Mac/Windows.
 
 Subcommands:
-  set|get|delete|list     CRUD for a provider key
+  add|get|remove|list     CRUD-style commands for a provider key
   providers list|doctor   Availability and health`;
 
   static examples = [
-    "ecp config secrets set --provider os-keychain --key ecp/server/fetch.token --prompt",
-    "ecp config secrets get --provider os-keychain --key ecp/server/fetch.token",
+    "ecp config secrets add --provider os-keychain --key server/fetch.token --prompt",
+    "ecp config secrets get --provider os-keychain --key ecp.server.fetch.token",
     "ecp config secrets providers doctor",
   ];
 
@@ -21,9 +21,9 @@ Subcommands:
       [
         "Usage: ecp config secrets <subcommand>",
         "",
-        "  set       Store a secret (os-keychain, cli-session)",
+        "  add       Add or replace a secret (os-keychain, cli-session)",
         "  get       Read a secret (default: redacted preview)",
-        "  delete    Remove a stored secret",
+        "  remove    Remove a stored secret",
         "  list      List keys (when supported by provider)",
         "  providers list|doctor",
         "",

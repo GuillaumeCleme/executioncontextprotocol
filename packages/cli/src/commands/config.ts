@@ -16,7 +16,7 @@ You can also edit the file directly — use "ecp config path" for the resolved p
     "ecp config plugins get",
     "ecp config models allow add ollama llama3.2:3b",
     "ecp config tools add fetch --json '{\"transport\":{\"type\":\"stdio\",\"command\":\"docker\",\"args\":[\"run\",\"-i\",\"--rm\",\"mcp/fetch\"]}}'",
-    "ecp config secrets set --provider os-keychain --key ecp/server/fetch.token --prompt",
+    "ecp config secrets add --provider os-keychain --key server/fetch.token --prompt",
     "ecp config secrets providers doctor",
   ];
 

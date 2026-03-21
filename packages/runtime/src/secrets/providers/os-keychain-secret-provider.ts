@@ -13,6 +13,7 @@ import type {
   SecretValueResult,
 } from "@executioncontrolprotocol/plugins";
 import { ECP_KEYRING_SERVICE } from "../constants.js";
+import { normalizeOsKeychainAccountKey } from "../os-keychain-account-key.js";
 import { redactSecret } from "../redaction.js";
 
 /**
@@ -62,14 +63,16 @@ export class OsKeychainSecretProvider implements SecretProvider {
 
   async store(input: SecretStoreInput): Promise<void> {
     const { Entry } = await import("@napi-rs/keyring");
-    const entry = new Entry(ECP_KEYRING_SERVICE, input.ref.key);
+    const account = normalizeOsKeychainAccountKey(input.ref.key);
+    const entry = new Entry(ECP_KEYRING_SERVICE, account);
     entry.setPassword(input.value);
   }
 
   async load(ref: SecretRef): Promise<SecretValueResult | null> {
     try {
       const { Entry } = await import("@napi-rs/keyring");
-      const entry = new Entry(ECP_KEYRING_SERVICE, ref.key);
+      const account = normalizeOsKeychainAccountKey(ref.key);
+      const entry = new Entry(ECP_KEYRING_SERVICE, account);
       const password = entry.getPassword();
       if (password == null || password === "") return null;
       return { value: password, redactedPreview: redactSecret(password) };
@@ -80,7 +83,8 @@ export class OsKeychainSecretProvider implements SecretProvider {
 
   async delete(ref: SecretRef): Promise<void> {
     const { Entry } = await import("@napi-rs/keyring");
-    const entry = new Entry(ECP_KEYRING_SERVICE, ref.key);
+    const account = normalizeOsKeychainAccountKey(ref.key);
+    const entry = new Entry(ECP_KEYRING_SERVICE, account);
     try {
       entry.deletePassword();
     } catch {

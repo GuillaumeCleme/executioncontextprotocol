@@ -22,7 +22,8 @@ export interface CredentialBindingSource {
 
   /**
    * Provider-specific lookup key.
-   * For `os-keychain`, use a stable path-like id (e.g. `ecp/server/github-mcp.token`).
+   * For `os-keychain`, use a dotted `ecp.*` name or path segments (e.g. `mcp.github.token` or `server/fetch.token`);
+   * the runtime normalizes to a single keyring account under the `ecp.` namespace.
    */
   key: string;
 

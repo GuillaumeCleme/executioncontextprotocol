@@ -6,8 +6,8 @@ import { loadConfigForDisplay } from "../../../lib/system-config-cli.js";
 import { createDefaultSecretBroker } from "@executioncontrolprotocol/runtime";
 import type { SecretRef } from "@executioncontrolprotocol/plugins";
 
-export default class ConfigSecretsDelete extends Command {
-  static summary = "Delete a stored secret";
+export default class ConfigSecretsRemove extends Command {
+  static summary = "Remove a stored secret";
 
   static flags = {
     ...configScopeFlags,
@@ -18,13 +18,13 @@ export default class ConfigSecretsDelete extends Command {
     }),
     key: Flags.string({
       char: "k",
-      description: "Lookup key",
+      description: "Lookup key (same form as add — os-keychain normalizes to ecp.*)",
       required: true,
     }),
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(ConfigSecretsDelete);
+    const { flags } = await this.parse(ConfigSecretsRemove);
     const cwd = process.cwd();
     const { config } = loadConfigForDisplay({
       global: flags.global as boolean,
@@ -44,7 +44,7 @@ export default class ConfigSecretsDelete extends Command {
       this.error(`Unknown provider "${flags.provider}".`, { exit: 1 });
     }
     if (!provider.delete) {
-      this.error(`Provider "${flags.provider}" does not support delete.`, { exit: 1 });
+      this.error(`Provider "${flags.provider}" does not support remove.`, { exit: 1 });
     }
 
     const ref: SecretRef = {
@@ -53,6 +53,6 @@ export default class ConfigSecretsDelete extends Command {
       key: flags.key!,
     };
     await provider.delete(ref);
-    this.log(`Deleted secret for provider "${flags.provider}" key "${flags.key}".`);
+    this.log(`Removed secret for provider "${flags.provider}" key "${flags.key}".`);
   }
 }

@@ -19,7 +19,7 @@ import {
 import { redactSecret } from "../redaction.js";
 
 /**
- * Ephemeral secrets for the current CLI process (`putCliSessionSecret` / `ecp config secrets set`).
+ * Ephemeral secrets for the current CLI process (`putCliSessionSecret` / `ecp config secrets add`).
  */
 export class CliSessionSecretProvider implements SecretProvider {
   readonly id = "cli-session";

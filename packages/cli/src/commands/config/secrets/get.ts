@@ -18,7 +18,7 @@ export default class ConfigSecretsGet extends Command {
     }),
     key: Flags.string({
       char: "k",
-      description: "Lookup key",
+      description: "Lookup key (os-keychain: same form as add; normalized to ecp.* in the keyring)",
       required: true,
     }),
     show: Flags.boolean({

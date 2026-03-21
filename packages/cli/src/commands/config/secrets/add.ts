@@ -8,8 +8,8 @@ import { loadConfigForDisplay } from "../../../lib/system-config-cli.js";
 import { createDefaultSecretBroker } from "@executioncontrolprotocol/runtime";
 import type { SecretRef } from "@executioncontrolprotocol/plugins";
 
-export default class ConfigSecretsSet extends Command {
-  static summary = "Store a secret in a provider (os-keychain, cli-session)";
+export default class ConfigSecretsAdd extends Command {
+  static summary = "Add or replace a secret in a provider (os-keychain, cli-session)";
 
   static flags = {
     ...configScopeFlags,
@@ -20,7 +20,8 @@ export default class ConfigSecretsSet extends Command {
     }),
     key: Flags.string({
       char: "k",
-      description: "Provider account / lookup key (e.g. ecp/server/fetch.token)",
+      description:
+        "Secret lookup key (os-keychain: dotted ecp.* or path e.g. server/fetch.token → ecp.server.fetch.token)",
       required: true,
     }),
     value: Flags.string({
@@ -33,7 +34,7 @@ export default class ConfigSecretsSet extends Command {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(ConfigSecretsSet);
+    const { flags } = await this.parse(ConfigSecretsAdd);
     if (flags.value && flags.prompt) {
       this.error("Use only one of --value or --prompt.", { exit: 1 });
     }
