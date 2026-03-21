@@ -4,18 +4,31 @@
  * @category Secrets
  */
 
-export { ECP_KEYRING_ACCOUNT_PREFIX, ECP_KEYRING_SERVICE } from "./constants.js";
+export {
+  ECP_KEYRING_ACCOUNT_PREFIX,
+  ECP_KEYRING_SERVICE,
+  ECP_SECRET_REF_PROTOCOL_PREFIX,
+  ECP_SECRET_REF_WIN32_ENUM_FILTER,
+} from "./constants.js";
 export {
   DOT_PROVIDER_ID,
   ENV_PROVIDER_ID,
   OS_PROVIDER_ID,
   SESSION_PROVIDER_ID,
 } from "./provider-ids.js";
-export { normalizeOsKeychainAccountKey } from "./os-keychain-account-key.js";
+export {
+  canonicalSecretKeyForOsStorage,
+  normalizeOsKeychainAccountKey,
+  osKeychainCredentialTarget,
+} from "./os-keychain-account-key.js";
 export { redactSecret } from "./redaction.js";
 export { DefaultSecretBroker } from "./broker.js";
 export { DefaultSecretProviderRegistry } from "./registry.js";
-export { secretRefFromBinding } from "./ref.js";
+export {
+  canonicalSecretKeyForBinding,
+  secretRefFromBinding,
+  secretRefIdFromLogicalKey,
+} from "./ref.js";
 export { isInsecureSecretProvider } from "./insecure.js";
 export * from "./warnings.js";
 export {

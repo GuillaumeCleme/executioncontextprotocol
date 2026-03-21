@@ -1,9 +1,13 @@
 import { Command, Flags } from "@oclif/core";
 import { configScopeFlags } from "../../../lib/config-flags.js";
-import { OS_PROVIDER_ID } from "../../../lib/secret-provider-ids.js";
 import { resolveDotenvPathFromConfig, resolveSecretPolicyFromConfig } from "../../../lib/secrets-config.js";
 import { loadConfigForDisplay } from "../../../lib/system-config-cli.js";
-import { createDefaultSecretBroker } from "@executioncontrolprotocol/runtime";
+import {
+  canonicalSecretKeyForBinding,
+  createDefaultSecretBroker,
+  ECP_SECRET_REF_PROTOCOL_PREFIX,
+  secretRefIdFromLogicalKey,
+} from "@executioncontrolprotocol/runtime";
 import type { SecretRef } from "@executioncontrolprotocol/plugins";
 
 export default class ConfigSecretsGet extends Command {
@@ -18,7 +22,7 @@ export default class ConfigSecretsGet extends Command {
     }),
     key: Flags.string({
       char: "k",
-      description: `Lookup key (${OS_PROVIDER_ID}: same form as add; normalized to ecp.* in the keyring)`,
+      description: `Lookup key (same form as add; ref id is ${ECP_SECRET_REF_PROTOCOL_PREFIX}<key>)`,
       required: true,
     }),
     show: Flags.boolean({
@@ -51,9 +55,9 @@ export default class ConfigSecretsGet extends Command {
     }
 
     const ref: SecretRef = {
-      id: `ecp://${flags.provider}/${flags.key}`,
+      id: secretRefIdFromLogicalKey(flags.key!),
       provider: flags.provider!,
-      key: flags.key!,
+      key: canonicalSecretKeyForBinding(flags.key!),
     };
     const result = await provider.load(ref);
     if (!result) {
