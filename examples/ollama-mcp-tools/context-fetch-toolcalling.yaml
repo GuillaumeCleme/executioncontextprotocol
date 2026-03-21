@@ -6,11 +6,11 @@ metadata:
   version: 1.0.0
   description: Ollama agent calls MCP fetch tool and returns extracted summary
 
-extensions:
+plugins:
   version: 1.0.0
   providers:
     - name: ollama
-      kind: model-provider
+      kind: provider
       type: builtin
       version: 0.3.0
   security: {}

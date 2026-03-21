@@ -193,7 +193,7 @@ describe("registerBuiltinMemoryPlugin", () => {
     const plugin = plugins.find((p) => p.id === "memory");
     expect(plugin).toBeDefined();
     expect(plugin?.id).toBe("memory");
-    expect(plugin?.kind).toBe("plugin");
+    expect(plugin?.kind).toBe("memory");
     expect(plugin?.version).toBe("0.3.0");
   });
 

@@ -1,5 +1,5 @@
 /**
- * Built-in file progress logger — appends execution progress events to a log file
+ * Built-in file logger extension — appends execution progress events to a log file
  * in the user's ECP config directory (~/.ecp/logs by default).
  *
  * @category Extensions
@@ -8,14 +8,14 @@
 import { appendFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { homedir } from "node:os";
-import type { ExecutionProgressEvent, ProgressCallback } from "../../engine/types.js";
+import type { ExecutionProgressEvent, ProgressCallback } from "@executioncontrolprotocol/plugins";
 
 /**
- * Configuration for the file progress logger.
+ * Configuration for the built-in file logger (`id: file`).
  *
  * @category Extensions
  */
-export interface FileProgressLoggerConfig {
+export interface FileLoggerConfig {
   /**
    * Directory for log files. Defaults to ~/.ecp/logs.
    */
@@ -30,7 +30,7 @@ export interface FileProgressLoggerConfig {
 const DEFAULT_LOG_DIR = "logs";
 const DEFAULT_LOG_FILE = "ecp.log";
 
-function getLogPath(config: FileProgressLoggerConfig = {}): string {
+function getLogPath(config: FileLoggerConfig = {}): string {
   const base = config.logDir ?? resolve(homedir(), ".ecp", DEFAULT_LOG_DIR);
   const file = config.logFile ?? DEFAULT_LOG_FILE;
   return resolve(base, file);
@@ -59,9 +59,7 @@ function formatEvent(event: ExecutionProgressEvent): string {
 /**
  * Create a progress callback that appends each event to a log file in the user directory.
  */
-export function createFileProgressLogger(
-  config: FileProgressLoggerConfig = {},
-): ProgressCallback {
+export function createFileLogger(config: FileLoggerConfig = {}): ProgressCallback {
   const logPath = getLogPath(config);
   const dir = dirname(logPath);
 

@@ -1,5 +1,5 @@
 import ora from "ora";
-import type { ExecutionProgressEvent, ProgressCallback } from "@executioncontrolprotocol/runtime";
+import type { ExecutionProgressEvent, ProgressCallback } from "@executioncontrolprotocol/plugins";
 
 function phaseToLabel(status: string): string {
   const labels: Record<string, string> = {

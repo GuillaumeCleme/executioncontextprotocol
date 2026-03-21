@@ -24,17 +24,17 @@ metadata:
   version: 2.0.0
   description: Weekly ecommerce ops context with executor-scoped mounts/policies and orchestrated multi-agent runs
 
-extensions:
+plugins:
   version: 1.0.0
-  description: Built-in extension registrations for this Context
+  description: Built-in plugin registrations for this Context
   providers:
     - name: openai
-      kind: model-provider
+      kind: provider
       type: builtin
       version: 0.3.0
       description: Built-in OpenAI model provider
     - name: ollama
-      kind: model-provider
+      kind: provider
       type: builtin
       version: 0.3.0
       description: Built-in Ollama model provider

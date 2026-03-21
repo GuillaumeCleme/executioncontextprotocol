@@ -20,7 +20,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Build (spec → schema → runtime → cli)
+      - name: Build (spec → plugins → schema → runtime → cli)
         run: npm run build
       - name: Lint (ESLint + markdownlint)
         run: npm run lint
@@ -134,12 +134,18 @@ jobs:
           cache: npm
           registry-url: https://registry.npmjs.org
       - run: npm ci
-      - name: Build (spec → schema → runtime → cli)
+      - name: Build (spec → plugins → schema → runtime → cli)
         run: npm run build
       - name: Publish @executioncontrolprotocol/spec
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --workspace=@executioncontrolprotocol/spec --access public
+      - name: Wait for registry (avoid race before plugins publish)
+        run: sleep 10
+      - name: Publish @executioncontrolprotocol/plugins
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --workspace=@executioncontrolprotocol/plugins --access public
       - name: Wait for registry (avoid race before runtime publish)
         run: sleep 10
       - name: Publish @executioncontrolprotocol/runtime
