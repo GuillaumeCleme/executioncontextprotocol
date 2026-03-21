@@ -50,6 +50,7 @@
     "@executioncontrolprotocol/plugins": "^0.4.1",
     "@executioncontrolprotocol/spec": "^0.4.1",
     "@modelcontextprotocol/sdk": "^1.27.0",
+    "@napi-rs/keyring": "^1.2.0",
     "ajv": "^8.17.0",
     "js-yaml": "^4.1.0",
     "openai": "^4.0.0",

@@ -8,6 +8,19 @@
 # Contexts declare which plugins they use (plugins.providers); the
 # runtime decides which of those are enabled via --enable or this config.
 
+# ----------------------------------------------------------------------
+# Secrets: policy and provider options (secret values live in the OS keyring,
+# env, .env, or ephemeral CLI session — not in this file).
+#
+# ecp config secrets set --provider os-keychain --key ecp/server/fetch.token --prompt
+# secrets:
+#   defaultProvider: os-keychain
+#   policy: warn
+#   providers:
+#     dotenv:
+#       enabled: true
+#       path: .env
+
 plugins:
   # Allow-list: only these plugin IDs may be enabled at runtime.
   # CLI --enable and defaultEnable must be a subset of this list.
@@ -57,6 +70,13 @@ toolServers:
       type: stdio
       command: docker
       args: [run, -i, --rm, mcp/fetch]
+    # Example: inject TOKEN into the container env from the OS keyring at connect time.
+    # credentials:
+    #   bindings:
+    #     - name: TOKEN
+    #       source: { provider: os-keychain, key: ecp/server/fetch.token }
+    #       required: true
+    #       delivery: env
 
   # Deterministic local fake MCP server (TypeScript over stdio).
   # Assumes you run `ecp` from the repo root.

@@ -4,6 +4,7 @@ import ora from "ora";
 
 import {
   BUILTIN_PLUGIN_VERSION,
+  createDefaultSecretBroker,
   ECPEngine,
   loadContext,
   resolveInputs,
@@ -197,11 +198,19 @@ export default class Run extends Command {
       }
     }
 
+    const dotenvRel = systemConfig?.secrets?.providers?.dotenv?.path;
+    const dotenvPath = dotenvRel ? resolve(cwd, dotenvRel) : resolve(cwd, ".env");
+    const { broker: secretBroker } = createDefaultSecretBroker({
+      policy: systemConfig?.secrets?.policy ?? "warn",
+      dotenvPath,
+      cwd,
+    });
+
     const registry = new ExtensionRegistry();
     const openaiDefaults = systemConfig?.modelProviders?.openai ?? {};
     const ollamaDefaults = systemConfig?.modelProviders?.ollama ?? {};
     registerBuiltinModelProviders(registry, {
-      version: "0.3.0",
+      version: BUILTIN_PLUGIN_VERSION,
       openai: { defaultModel: selectedModel ?? openaiDefaults.defaultModel },
       ollama: {
         baseURL: ollamaDefaults.baseURL,
@@ -289,6 +298,7 @@ export default class Run extends Command {
 
     const engine = new ECPEngine(modelProvider, toolInvoker, agentTransport, {
       toolServers,
+      secretBroker,
       agentEndpoints: systemConfig?.agentEndpoints,
       defaultModel: selectedModel ?? openaiDefaults.defaultModel ?? ollamaDefaults.defaultModel,
       modelOverride: selectedModel,

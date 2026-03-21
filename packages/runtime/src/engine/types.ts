@@ -18,6 +18,9 @@ import type {
   MemoryStore,
   ProgressCallback,
   RunStatus,
+  SecretBroker,
+  SecretPolicyMode,
+  ToolServerCredentialBinding,
 } from "@executioncontrolprotocol/plugins";
 import type { ExtensionRegistry } from "../extensions/registry.js";
 
@@ -231,15 +234,30 @@ export interface ExecutionResult {
 // ---------------------------------------------------------------------------
 
 /**
+ * One MCP (or other) tool server entry: transport plus optional credential bindings.
+ *
+ * @category Engine
+ */
+export interface ToolServerDefinition {
+  transport: Record<string, unknown>;
+
+  /**
+   * Declarative secret bindings resolved at connect time (stdio env injection).
+   * Values are never stored here — only provider ids and lookup keys.
+   */
+  credentials?: {
+    bindings?: ToolServerCredentialBinding[];
+  };
+}
+
+/**
  * Configuration for tool servers the engine should connect to.
  * Maps logical server names (as used in mount definitions) to
  * connection details.
  *
  * @category Engine
  */
-export type ToolServerRegistry = Record<string, {
-  transport: Record<string, unknown>;
-}>;
+export type ToolServerRegistry = Record<string, ToolServerDefinition>;
 
 /**
  * Configuration supplied to the engine at initialization.
@@ -291,6 +309,12 @@ export interface EngineConfig {
    * Runtime plugin registry and security configuration.
    */
   plugins?: PluginRuntimeConfig;
+
+  /**
+   * Resolves {@link ToolServerDefinition.credentials} for MCP stdio transports.
+   * When set, stdio servers receive a minimal env plus resolved bindings.
+   */
+  secretBroker?: SecretBroker;
 }
 
 /**
@@ -331,6 +355,27 @@ export interface PluginRuntimeConfig {
  * @category Engine
  */
 export interface ECPSystemConfig {
+  /**
+   * Secret provider defaults and policy (values live in providers, not in this file).
+   */
+  secrets?: {
+    /** Preferred provider id for interactive commands (e.g. `os-keychain`). */
+    defaultProvider?: string;
+
+    /** How to treat insecure providers (`env`, `dotenv`, `cli-session`, `memory`). */
+    policy?: SecretPolicyMode;
+
+    /** Per-provider toggles and options. */
+    providers?: Record<
+      string,
+      {
+        enabled?: boolean;
+        /** Dotenv file path (relative to cwd when loading project config). */
+        path?: string;
+      }
+    >;
+  };
+
   /**
    * Plugin allow-list and defaults.
    */

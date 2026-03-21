@@ -17,6 +17,12 @@ loggers:
       # Optional: override log file name (default: ecp.log)
       # logFile: ecp.log
 
+# Optional: secrets.policy (warn|strict|permissive) and ecp config secrets * commands.
+# secrets:
+#   policy: warn
+#   providers:
+#     dotenv: { path: .env }
+
 # ----------------------------------------------------------------------
 # MCP tool servers (tool wiring)
 #

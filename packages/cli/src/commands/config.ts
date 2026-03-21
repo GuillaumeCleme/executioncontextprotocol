@@ -5,7 +5,7 @@ export default class Config extends Command {
 
   static description = `Inspect and edit system config (project ecp.config.* or global ~/.ecp/).
 
-Subcommands cover plugins, model providers, MCP tool servers, loggers, and A2A endpoints.
+Subcommands cover plugins, model providers, MCP tool servers, loggers, secrets, and A2A endpoints.
 You can also edit the file directly — use "ecp config path" for the resolved path.`;
 
   static examples = [
@@ -16,6 +16,8 @@ You can also edit the file directly — use "ecp config path" for the resolved p
     "ecp config plugins get",
     "ecp config models allow add ollama llama3.2:3b",
     "ecp config tools add fetch --json '{\"transport\":{\"type\":\"stdio\",\"command\":\"docker\",\"args\":[\"run\",\"-i\",\"--rm\",\"mcp/fetch\"]}}'",
+    "ecp config secrets set --provider os-keychain --key ecp/server/fetch.token --prompt",
+    "ecp config secrets providers doctor",
   ];
 
   async run(): Promise<void> {
@@ -31,6 +33,7 @@ You can also edit the file directly — use "ecp config path" for the resolved p
         "  models            CRUD for model providers and allowed models",
         "  tools             CRUD for MCP tool servers",
         "  loggers           CRUD for logger policy and per-logger config",
+        "  secrets           Store/list secrets (os-keychain, cli-session, …)",
         "  endpoints         CRUD for A2A agent endpoint URLs",
         "",
         "Resource commands use verbs: add, get, remove, update (see ecp config <topic> --help).",

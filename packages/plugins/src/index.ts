@@ -11,3 +11,4 @@ export * from "./memory.js";
 export * from "./progress.js";
 export * from "./extensions.js";
 export * from "./memory-plugin.js";
+export * from "./secrets.js";

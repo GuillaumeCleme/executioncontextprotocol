@@ -39,7 +39,8 @@ import type { PolicyEnforcer } from "../policies/types.js";
 import type { TraceCollector } from "../tracing/collector.js";
 import { BUILTIN_PLUGIN_VERSION } from "../extensions/builtin-defaults.js";
 import type { ExtensionRegistry } from "../extensions/registry.js";
-import type { MemoryStore } from "./types.js";
+import type { MemoryStore, ToolServerDefinition } from "./types.js";
+import { resolveStdioEnvForToolServer } from "../secrets/mcp-env.js";
 
 /**
  * Options for a single Context execution.
@@ -811,9 +812,21 @@ export class ECPEngine {
 
   private async connectToolServers(state: RunState): Promise<void> {
     const servers = this.config.toolServers ?? {};
-    for (const [name, config] of Object.entries(servers)) {
+    const broker = this.config.secretBroker;
+    for (const [name, serverConfig] of Object.entries(servers)) {
       try {
-        await this.toolInvoker.connect({ name, transport: config.transport });
+        let transport = serverConfig.transport;
+        if (broker) {
+          const { transport: t, warnings } = await resolveStdioEnvForToolServer(
+            broker,
+            serverConfig as ToolServerDefinition,
+          );
+          transport = t;
+          for (const w of warnings) {
+            this.log(state, "warn", `[secrets] ${w}`);
+          }
+        }
+        await this.toolInvoker.connect({ name, transport });
         this.log(state, "info", `Connected to tool server "${name}"`);
       } catch (err) {
         this.log(state, "warn",

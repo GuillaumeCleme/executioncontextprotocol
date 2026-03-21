@@ -2,7 +2,7 @@
 
 TypeScript types for building **ECP-compliant plugins** (model providers, executors, loggers, memory stores) and for authoring Context manifests.
 
-This package **re-exports** [`@executioncontrolprotocol/spec`](https://www.npmjs.com/package/@executioncontrolprotocol/spec) and adds **runtime contract** types (e.g. `ModelProvider`, `MemoryStore`, `ProgressCallback`, extension registration shapes) without depending on the full engine.
+This package **re-exports** [`@executioncontrolprotocol/spec`](https://www.npmjs.com/package/@executioncontrolprotocol/spec) and adds **runtime contract** types (e.g. `ModelProvider`, `MemoryStore`, `ProgressCallback`, extension registration shapes, **`SecretProvider` / `SecretBroker` / credential bindings**) without depending on the full engine.
 
 ## Install
 
@@ -20,6 +20,8 @@ import type {
   ModelProvider,
   MemoryStore,
   PluginRegistration,
+  SecretProvider,
+  ToolServerCredentialBinding,
 } from "@executioncontrolprotocol/plugins";
 ```
 
