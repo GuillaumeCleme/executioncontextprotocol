@@ -10,6 +10,9 @@ import {
 import {
   assertPlainObject,
   assertToolServerEntry,
+  ensureSecurityAgentEndpointAllowed,
+  ensureSecurityLoggerAllowed,
+  ensureSecurityToolServerAllowed,
   isWiringType,
   wiringEndpointsMergeConfig,
   wiringEndpointsUpdateUrl,
@@ -124,6 +127,7 @@ export default class ConfigUpdate extends Command {
           const parsed = readJsonFromFile(flags.file);
           assertToolServerEntry(parsed);
           wiringToolsUpdate(config, name, parsed);
+          ensureSecurityToolServerAllowed(config, name);
         } else {
           const tt = flags["transport-type"] as "stdio" | "sse" | undefined;
           if (!tt) {
@@ -144,6 +148,7 @@ export default class ConfigUpdate extends Command {
           });
           assertToolServerEntry(entry);
           wiringToolsUpdate(config, name, entry as { transport: Record<string, unknown> });
+          ensureSecurityToolServerAllowed(config, name);
         }
         this.log(`Updated tool server "${name}" (${path})`);
       } else if (t === "loggers") {
@@ -156,12 +161,14 @@ export default class ConfigUpdate extends Command {
           const parsed = readJsonFromFile(flags.file);
           assertPlainObject(parsed);
           wiringLoggersUpdate(config, id, parsed);
+          ensureSecurityLoggerAllowed(config, id);
         } else {
           const parsed = parseUniqueOptionFlags(flags.option);
           if (Object.keys(parsed).length === 0) {
             this.error("Provide --file or at least one --option key=value for loggers.", { exit: 1 });
           }
           wiringLoggersUpdate(config, id, parsed as Record<string, unknown>);
+          ensureSecurityLoggerAllowed(config, id);
         }
         this.log(`Updated loggers.config.${id} (${path})`);
       } else if (t === "models") {
@@ -200,6 +207,7 @@ export default class ConfigUpdate extends Command {
           this.error("Use either --file or --option for endpoint config, not both.", { exit: 1 });
         }
         wiringEndpointsUpdateUrl(config, name, url);
+        ensureSecurityAgentEndpointAllowed(config, name);
         if (hasEndpointsExtraPayload(flags)) {
           if (flags.file) {
             const extra = readJsonFromFile(flags.file);

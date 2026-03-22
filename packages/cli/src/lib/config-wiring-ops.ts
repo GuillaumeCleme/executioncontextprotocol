@@ -3,7 +3,7 @@
  * loggers.config, agents.endpoints). Policy lives under security.* only.
  */
 
-import type { ECPSystemConfig, ModelProviderConfig } from "@executioncontrolprotocol/runtime";
+import type { ECPSystemConfig, ModelProviderConfig, SecurityConfig } from "@executioncontrolprotocol/runtime";
 
 export const WIRING_TYPES = ["tools", "models", "loggers", "endpoints"] as const;
 export type WiringType = (typeof WIRING_TYPES)[number];
@@ -24,6 +24,85 @@ export function assertPlainObject(parsed: unknown): asserts parsed is Record<str
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
     throw new Error("Value must be a JSON object.");
   }
+}
+
+const SECURITY_AREA_KEYS = [
+  "models",
+  "tools",
+  "executors",
+  "memory",
+  "agents",
+  "loggers",
+  "secrets",
+  "plugins",
+] as const;
+
+/**
+ * Ensure `security.<area>` exists as an object for each v0.5 area (required by host validation).
+ *
+ * @category Config CLI
+ */
+export function ensureSecurityAreaObjects(config: ECPSystemConfig): void {
+  config.security ??= {} as SecurityConfig;
+  const sec = config.security as unknown as Record<string, Record<string, unknown>>;
+  for (const key of SECURITY_AREA_KEYS) {
+    sec[key] ??= {};
+  }
+}
+
+/**
+ * Append a tool server name to `security.tools.allowServers` when missing.
+ *
+ * @category Config CLI
+ */
+export function ensureSecurityToolServerAllowed(config: ECPSystemConfig, name: string): void {
+  ensureSecurityAreaObjects(config);
+  const cur = config.security!.tools!.allowServers ?? [];
+  if (!cur.includes(name)) {
+    config.security!.tools!.allowServers = [...cur, name];
+  }
+}
+
+/**
+ * Append a logger id to `security.loggers.allowEnable` when missing.
+ *
+ * @category Config CLI
+ */
+export function ensureSecurityLoggerAllowed(config: ECPSystemConfig, id: string): void {
+  ensureSecurityAreaObjects(config);
+  const cur = config.security!.loggers!.allowEnable ?? [];
+  if (!cur.includes(id)) {
+    config.security!.loggers!.allowEnable = [...cur, id];
+  }
+}
+
+/**
+ * Append an agents endpoint name to `security.agents.allowEndpoints` when missing.
+ *
+ * @category Config CLI
+ */
+export function ensureSecurityAgentEndpointAllowed(config: ECPSystemConfig, name: string): void {
+  ensureSecurityAreaObjects(config);
+  const cur = config.security!.agents!.allowEndpoints ?? [];
+  if (!cur.includes(name)) {
+    config.security!.agents!.allowEndpoints = [...cur, name];
+  }
+}
+
+/**
+ * Ensure `defaultModel` appears in `allowedModels` when a default is set.
+ *
+ * @category Config CLI
+ */
+export function normalizeModelProviderDefaultInAllowed(block: ModelProviderConfig): ModelProviderConfig {
+  const dm = block.defaultModel;
+  if (dm === undefined) return block;
+  const am = block.allowedModels;
+  if (!am || am.length === 0) {
+    return { ...block, allowedModels: [dm] };
+  }
+  if (am.includes(dm)) return block;
+  return { ...block, allowedModels: [...am, dm] };
 }
 
 /** Shallow merge provider fields; deep-merge `config` when both sides are objects. */
@@ -48,7 +127,7 @@ export function mergeModelProviderBlock(
       out[k] = v;
     }
   }
-  return out as ModelProviderConfig;
+  return normalizeModelProviderDefaultInAllowed(out as ModelProviderConfig);
 }
 
 export function wiringToolsAdd(

@@ -76,6 +76,18 @@ export function validateSystemConfigAgainstSpec(config: ECPSystemConfig): string
     }
   }
 
+  if (isNonEmptyObject(providers)) {
+    for (const [id, block] of Object.entries(providers)) {
+      const dm = block?.defaultModel;
+      const am = block?.allowedModels;
+      if (dm !== undefined && am !== undefined && am.length > 0 && !am.includes(dm)) {
+        errors.push(
+          `models.providers.${id}.defaultModel ${JSON.stringify(dm)} is not listed in models.providers.${id}.allowedModels`,
+        );
+      }
+    }
+  }
+
   const allowServers = sec.tools?.allowServers;
   const servers = config.tools?.servers;
   if (allowServers?.length && isNonEmptyObject(servers)) {
@@ -165,6 +177,41 @@ export function validateSystemConfigAgainstSpec(config: ECPSystemConfig): string
       if (!allowProviders.includes(id)) {
         errors.push(
           `security.models.defaultProviders includes ${JSON.stringify(id)} which is not in security.models.allowProviders`,
+        );
+      }
+    }
+  }
+
+  const execDefault = sec.executors?.defaultEnable;
+  if (execDefault?.length && execAllow?.length) {
+    for (const id of execDefault) {
+      if (!execAllow.includes(id)) {
+        errors.push(
+          `security.executors.defaultEnable includes ${JSON.stringify(id)} which is not in security.executors.allowExecutors`,
+        );
+      }
+    }
+  }
+
+  const agentDefault = sec.agents?.defaultEnable;
+  const agentAllowList = sec.agents?.allowEndpoints;
+  if (agentDefault?.length && agentAllowList?.length) {
+    for (const id of agentDefault) {
+      if (!agentAllowList.includes(id)) {
+        errors.push(
+          `security.agents.defaultEnable includes ${JSON.stringify(id)} which is not in security.agents.allowEndpoints`,
+        );
+      }
+    }
+  }
+
+  const loggerDefault = sec.loggers?.defaultEnable;
+  const loggerAllow = sec.loggers?.allowEnable;
+  if (loggerDefault?.length && loggerAllow?.length) {
+    for (const id of loggerDefault) {
+      if (!loggerAllow.includes(id)) {
+        errors.push(
+          `security.loggers.defaultEnable includes ${JSON.stringify(id)} which is not in security.loggers.allowEnable`,
         );
       }
     }

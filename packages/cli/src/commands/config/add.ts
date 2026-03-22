@@ -10,6 +10,9 @@ import {
 import {
   assertPlainObject,
   assertToolServerEntry,
+  ensureSecurityAgentEndpointAllowed,
+  ensureSecurityLoggerAllowed,
+  ensureSecurityToolServerAllowed,
   isWiringType,
   wiringEndpointsAdd,
   wiringEndpointsMergeConfig,
@@ -127,6 +130,7 @@ export default class ConfigAdd extends Command {
           const parsed = readJsonFromFile(flags.file);
           assertToolServerEntry(parsed);
           wiringToolsAdd(config, name, parsed);
+          ensureSecurityToolServerAllowed(config, name);
         } else {
           const tt = flags["transport-type"] as "stdio" | "sse" | undefined;
           if (!tt) {
@@ -148,6 +152,7 @@ export default class ConfigAdd extends Command {
           assertToolServerEntry(entry);
           wiringToolsAdd(config, name, entry as { transport: Record<string, unknown> });
         }
+        ensureSecurityToolServerAllowed(config, name);
         this.log(`Added tool server "${name}" (${path})`);
       } else if (t === "loggers") {
         const id = args.name;
@@ -166,6 +171,7 @@ export default class ConfigAdd extends Command {
           }
           wiringLoggersAdd(config, id, parsed as Record<string, unknown>);
         }
+        ensureSecurityLoggerAllowed(config, id);
         this.log(`Added loggers.config.${id} (${path})`);
       } else if (t === "models") {
         const providerId = flags.provider;
@@ -202,6 +208,7 @@ export default class ConfigAdd extends Command {
           this.error("Use either --file or --option for endpoint config, not both.", { exit: 1 });
         }
         wiringEndpointsAdd(config, name, url);
+        ensureSecurityAgentEndpointAllowed(config, name);
         if (hasEndpointsExtraPayload(flags)) {
           if (flags.file) {
             const extra = readJsonFromFile(flags.file);

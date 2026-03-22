@@ -20,6 +20,10 @@ CLI user input uses the **same casing style as enum / union literal values** in 
 
 **Summary:** Anything the user **types** as a named parameter (flag name, subcommand word, structured `key` in `key=value`) follows **kebab-case**, aligned with **enum / union literal** rules in TypeScript. Free-form **values** (paths, secrets, model ids, URLs) are not renamed by this rule.
 
+## Host security and system config on disk
+
+- **`ecp run`** and **`ecp validate`** **require** a resolvable system configuration file: project-local **`./ecp.config.yaml`** / **`./ecp.config.json`**, user-global **`~/.ecp/config.yaml`** (or **`~/.ecp/config.json`** / **`~/.ecp/ecp.config.yaml`** per merge rules), or **`--config <path>`** to an existing YAML/JSON file. If **none** of these exist, the command **fails** with a clear error (no implicit “open host” when config is missing). **`--config`** still loads a **single** file with **no** merge with `~/.ecp`.
+
 ## Wiring vs `security` (system config)
 
 - **`ecp config add|remove|get|update --type tools|models|loggers|endpoints`** — **wiring only** (`tools.servers`, `models.providers`, `loggers.config`, `agents.endpoints`). Use **generic** `--provider`, **`--default-model` / `--allowed-models` / `--option key=value`** (repeatable; duplicate keys invalid) for models; **`--transport-type` stdio|sse**, **`--stdio-command`**, **`--stdio-arg`**, **`--sse-url`**, **`--option`**, **`--credentials-file`**, or **`--file`** for tools; **`--option`** or **`--file`** for loggers/endpoints; **no** provider-specific command trees (no `ollama` subtopic, no hard-coded provider branches in those handlers).

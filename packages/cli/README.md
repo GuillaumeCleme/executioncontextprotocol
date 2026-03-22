@@ -16,9 +16,11 @@ npm install -g @executioncontrolprotocol/cli
 
 ```bash
 ecp --help
-ecp validate path/to/context.yaml
-ecp run path/to/context.yaml -i topic="Hello"
+ecp validate path/to/context.yaml --config path/to/ecp.config.yaml
+ecp run path/to/context.yaml --config path/to/ecp.config.yaml -i topic="Hello"
 ```
+
+Without **`--config`**, the CLI looks for **`./ecp.config.yaml`** / **`./ecp.config.json`** and **`~/.ecp/*`** and merges them when both exist. If **no** file is found, **`ecp run`** and **`ecp validate`** exit with an error so host policy is never implicit.
 
 ### System config (`ecp.config.yaml` / `~/.ecp/config.yaml`)
 
@@ -41,7 +43,7 @@ ecp config secrets yaml get
 
 `ecp run` accepts `--logger` / `-l` (e.g. `file`) to enable logger **plugins** (`kind: logger`); defaults and allow-lists are under **`security.loggers`**, per-logger options under **`loggers.config`**.
 
-YAML and JSON are supported; defaults are searched in order: `./ecp.config.yaml`, `./ecp.config.json`, then `~/.ecp/`.
+YAML and JSON are supported. **`ecp run`** and **`ecp validate`** load a **merged** view when both a project config (`./ecp.config.yaml` or `./ecp.config.json`) and a user config under **`~/.ecp/`** exist: values from the user file **override** the project file on the same keys (including under **`security`**). Use **`--config <path>`** to point at a **single** file with **no** merge. At least one file must exist (merged discovery or **`--config`**); otherwise the command fails.
 
 ## Secrets and environment files
 

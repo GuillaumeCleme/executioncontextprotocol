@@ -31,6 +31,17 @@ describe("buildModelProviderPatchFromFlags", () => {
       config: { baseURL: "http://localhost:11434" },
     });
   });
+
+  it("adds defaultModel to allowedModels when only default is set", () => {
+    expect(
+      buildModelProviderPatchFromFlags({
+        defaultModel: "gpt-4.1",
+      }),
+    ).toEqual({
+      defaultModel: "gpt-4.1",
+      allowedModels: ["gpt-4.1"],
+    });
+  });
 });
 
 describe("buildPluginSecurityPolicyFromFlags", () => {

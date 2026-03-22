@@ -58,6 +58,14 @@ export function buildModelProviderPatchFromFlags(options: {
   if (allowed.length > 0) {
     patch.allowedModels = allowed;
   }
+  if (options.defaultModel !== undefined) {
+    const cur = patch.allowedModels as string[] | undefined;
+    if (!cur || cur.length === 0) {
+      patch.allowedModels = [options.defaultModel];
+    } else if (!cur.includes(options.defaultModel)) {
+      patch.allowedModels = [...cur, options.defaultModel];
+    }
+  }
   const opts = parseUniqueOptionFlags(options.optionFlags);
   if (Object.keys(opts).length > 0) {
     patch.config = opts;
