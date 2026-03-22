@@ -11,12 +11,13 @@
 import type {
   ECPContext,
   Executor,
-  ExtensionSecurityPolicy,
+  PluginSecurityPolicy,
   ModelProviderReference,
   ModelProviderSelector,
   Orchestrator,
   SchemaDefinition,
 } from "@executioncontrolprotocol/spec";
+import { getContextPlugins } from "@executioncontrolprotocol/spec";
 import type { ModelProvider, ChatMessage, ToolDefinition, ToolCall } from "../providers/model-provider.js";
 import type { ToolInvoker } from "../protocols/tool-invoker.js";
 import type { AgentTransport, AgentRef, DelegatedTask } from "../protocols/agent-transport.js";
@@ -36,8 +37,10 @@ import { DefaultMountHydrator } from "../mounts/hydrator.js";
 import { createPolicyEnforcer } from "../policies/enforcer.js";
 import type { PolicyEnforcer } from "../policies/types.js";
 import type { TraceCollector } from "../tracing/collector.js";
+import { BUILTIN_PLUGIN_VERSION } from "../extensions/builtin-defaults.js";
 import type { ExtensionRegistry } from "../extensions/registry.js";
-import type { MemoryStoreLike } from "./types.js";
+import type { MemoryStore, ToolServerDefinition } from "./types.js";
+import { resolveStdioEnvForToolServer } from "../secrets/mcp-env.js";
 
 /**
  * Options for a single Context execution.
@@ -83,7 +86,7 @@ export class ECPEngine {
     config: EngineConfig = {},
   ) {
     this.modelProvider = modelProvider;
-    this.extensionRegistry = config.extensions?.registry;
+    this.extensionRegistry = config.plugins?.registry;
     this.toolInvoker = toolInvoker;
     this.agentTransport = agentTransport;
     this.config = config;
@@ -559,7 +562,7 @@ export class ECPEngine {
     parentSpanId?: string,
   ): Promise<ChatMessage[]> {
     const results: ChatMessage[] = [];
-    const store = this.config.memoryStore as MemoryStoreLike | undefined;
+    const store = this.config.memoryStore as MemoryStore | undefined;
     const memoryScope = executor.memory?.scope;
     const allowRead = executor.policies?.memoryAccess?.allowRead === true;
     const allowWrite = executor.policies?.memoryAccess?.allowWrite === true;
@@ -809,9 +812,39 @@ export class ECPEngine {
 
   private async connectToolServers(state: RunState): Promise<void> {
     const servers = this.config.toolServers ?? {};
-    for (const [name, config] of Object.entries(servers)) {
+    const allowList = this.config.mcpServerAllowList;
+    const effectiveSec = this.getEffectivePluginSecurity(state.context);
+    if (effectiveSec.allowKinds?.length && !effectiveSec.allowKinds.includes("tool")) {
+      this.log(
+        state,
+        "warn",
+        'Skipping MCP tool server connections: effective security.plugins.allowKinds does not include "tool".',
+      );
+      return;
+    }
+    const broker = this.config.secretBroker;
+    for (const [name, serverConfig] of Object.entries(servers)) {
+      if (allowList !== undefined && allowList.length > 0 && !allowList.includes(name)) {
+        this.log(
+          state,
+          "warn",
+          `Skipping tool server "${name}": not listed in security.tools.allowServers.`,
+        );
+        continue;
+      }
       try {
-        await this.toolInvoker.connect({ name, transport: config.transport });
+        let transport = serverConfig.transport;
+        if (broker) {
+          const { transport: t, warnings } = await resolveStdioEnvForToolServer(
+            broker,
+            serverConfig as ToolServerDefinition,
+          );
+          transport = t;
+          for (const w of warnings) {
+            this.log(state, "warn", `[secrets] ${w}`);
+          }
+        }
+        await this.toolInvoker.connect({ name, transport });
         this.log(state, "info", `Connected to tool server "${name}"`);
       } catch (err) {
         this.log(state, "warn",
@@ -892,7 +925,7 @@ export class ECPEngine {
       .join("\n\n");
 
     let memoryBlock = "";
-    const store = this.config.memoryStore as MemoryStoreLike | undefined;
+    const store = this.config.memoryStore as MemoryStore | undefined;
     if (
       store &&
       executor.memory &&
@@ -943,7 +976,7 @@ export class ECPEngine {
   ): Promise<ToolDefinition[]> {
     const tools: ToolDefinition[] = [];
 
-    const store = this.config.memoryStore as MemoryStoreLike | undefined;
+    const store = this.config.memoryStore as MemoryStore | undefined;
     if (store && executor.memory) {
       const allowRead = executor.policies?.memoryAccess?.allowRead === true;
       const allowWrite = executor.policies?.memoryAccess?.allowWrite === true;
@@ -1182,9 +1215,9 @@ export class ECPEngine {
         `Model provider extension "${providerRef.name}" is not registered.`,
       );
     }
-    if (registration.sourceType !== providerRef.type) {
+    if (registration.source !== providerRef.type) {
       throw new Error(
-        `Model provider "${providerRef.name}" expected source type "${providerRef.type}", got "${registration.sourceType}".`,
+        `Model provider "${providerRef.name}" expected source type "${providerRef.type}", got "${registration.source}".`,
       );
     }
     if (registration.version !== providerRef.version) {
@@ -1199,7 +1232,7 @@ export class ECPEngine {
       return cached;
     }
 
-    const providerConfig = context.extensions?.config?.[providerRef.name];
+    const providerConfig = getContextPlugins(context)?.config?.[providerRef.name];
     const created = this.extensionRegistry.createModelProvider(providerRef.name, providerConfig);
     this.modelProviderCache.set(cacheKey, created);
     return created;
@@ -1210,7 +1243,7 @@ export class ECPEngine {
       return {
         name: selector,
         type: "builtin",
-        version: "0.3.0",
+        version: BUILTIN_PLUGIN_VERSION,
       };
     }
     return selector;
@@ -1220,11 +1253,11 @@ export class ECPEngine {
     provider: ModelProviderReference,
     context: ECPContext,
   ): void {
-    const security = this.getEffectiveExtensionSecurity(context);
+    const security = this.getEffectivePluginSecurity(context);
 
-    if (security.allowKinds?.length && !security.allowKinds.includes("model-provider")) {
+    if (security.allowKinds?.length && !security.allowKinds.includes("provider")) {
       throw new Error(
-        `Model provider "${provider.name}" denied: kind "model-provider" is not allowed.`,
+        `Model provider "${provider.name}" denied: kind "provider" is not allowed.`,
       );
     }
 
@@ -1239,48 +1272,48 @@ export class ECPEngine {
 
     if (security.allowIds?.length && !security.allowIds.includes(provider.name)) {
       throw new Error(
-        `Model provider "${provider.name}" denied: provider is not in extensions allowIds.`,
+        `Model provider "${provider.name}" denied: provider is not in security.plugins.allowIds.`,
       );
     }
 
     if (security.denyIds?.includes(provider.name)) {
       throw new Error(
-        `Model provider "${provider.name}" denied: provider is listed in extensions denyIds.`,
+        `Model provider "${provider.name}" denied: provider is listed in security.plugins.denyIds.`,
       );
     }
 
-    const runtimeEnable = this.config.extensions?.enable;
-    const allowEnable = this.config.extensions?.allowEnable;
+    const runtimeEnable = this.config.plugins?.enable;
+    const allowEnable = this.config.plugins?.allowEnable;
     if (allowEnable !== undefined && allowEnable.length > 0) {
       if (!allowEnable.includes(provider.name)) {
         throw new Error(
-          `Model provider "${provider.name}" denied: not in system config allow-list (allowEnable).`,
+          `Model provider "${provider.name}" denied: not in system config security.models.allowProviders.`,
         );
       }
     }
     if (runtimeEnable !== undefined && runtimeEnable.length > 0) {
       if (!runtimeEnable.includes(provider.name)) {
         throw new Error(
-          `Model provider "${provider.name}" denied: provider is not enabled for this run (extensions.enable).`,
+          `Model provider "${provider.name}" denied: provider is not enabled for this run (plugins.enable).`,
         );
       }
     } else {
       const contextProviderIds = new Set(
-        context.extensions?.providers?.map((p) => p.name) ?? [],
+        getContextPlugins(context)?.providers?.map((p) => p.name) ?? [],
       );
       if (contextProviderIds.size > 0 && !contextProviderIds.has(provider.name)) {
         throw new Error(
-          `Model provider "${provider.name}" denied: provider is not declared in context.extensions.providers.`,
+          `Model provider "${provider.name}" denied: provider is not declared in context.plugins.providers.`,
         );
       }
     }
   }
 
-  private getEffectiveExtensionSecurity(
+  private getEffectivePluginSecurity(
     context: ECPContext,
-  ): ExtensionSecurityPolicy {
-    const contextPolicy = context.extensions?.security;
-    const systemPolicy = this.config.extensions?.security;
+  ): PluginSecurityPolicy {
+    const contextPolicy = getContextPlugins(context)?.security;
+    const systemPolicy = this.config.plugins?.security;
     const allowKinds = systemPolicy?.allowKinds ?? contextPolicy?.allowKinds;
     const allowSourceTypes =
       systemPolicy?.allowSourceTypes ?? contextPolicy?.allowSourceTypes;
@@ -1288,7 +1321,7 @@ export class ECPEngine {
       ...contextPolicy,
       ...systemPolicy,
       allowKinds,
-      // Default: allow all builtin extensions when not specified
+      // Default: allow all built-in plugins when not specified
       allowSourceTypes:
         allowSourceTypes !== undefined && allowSourceTypes.length > 0
           ? allowSourceTypes

@@ -1,16 +1,16 @@
-apiVersion: ecp/v0.3-draft
+specVersion: ecp/v0.3-draft
 kind: Context
 
 metadata:
   name: hello-world-ollama
   version: 1.0.0
-  description: Minimal single-executor example with Ollama (llama3.2:3b)
+  description: Minimal single-executor example with Ollama (gemma3:1b; same flow as single-executor)
 
-extensions:
+plugins:
   version: 1.0.0
   providers:
     - name: ollama
-      kind: model-provider
+      kind: provider
       type: builtin
       version: 0.3.0
   security: {}
@@ -50,7 +50,7 @@ executors:
         name: ollama
         type: builtin
         version: 0.3.0
-      name: llama3.2:3b
+      name: gemma3:1b
     instructions: |
       You are a concise summarizer.
       Given a topic, produce a JSON object with:

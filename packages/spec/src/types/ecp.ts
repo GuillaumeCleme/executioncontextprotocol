@@ -100,7 +100,7 @@ export interface ECPContext extends Extensible {
    * The ECP specification version this manifest conforms to
    * (e.g. `"ecp/v0.3-draft"`).
    */
-  apiVersion: string;
+  specVersion: string;
 
   /**
    * Must be `"Context"`.
@@ -153,10 +153,10 @@ export interface ECPContext extends Extensible {
   executors?: Executor[];
 
   /**
-   * Extension declarations and runtime security controls for loading
-   * model providers, executors, and plugins.
+   * Declared plugins (model providers, executors, loggers, memory, …) and
+   * runtime security controls for loading them.
    */
-  extensions?: Extensions;
+  plugins?: Plugins;
 }
 
 // ---------------------------------------------------------------------------
@@ -186,56 +186,72 @@ export interface Metadata {
 }
 
 // ---------------------------------------------------------------------------
-// Extension registration and loading
+// Plugins (model providers, executors, loggers, memory, …)
 // ---------------------------------------------------------------------------
 
 /**
- * The supported extension object kinds.
+ * Role of a plugin in the Context manifest and runtime registry.
+ * `"tool"` denotes MCP (or similar) tool servers wired under system config `tools.servers`
+ * and gated by `security.tools` / `security.plugins` on the host.
+ * Additional values may be added by future spec versions.
  *
  * @category Context
  */
-export type ExtensionKind = "model-provider" | "executor" | "plugin";
+export type PluginKind = "provider" | "executor" | "logger" | "memory" | "tool";
 
 /**
- * The supported extension source types.
+ * All defined {@link PluginKind} values (for CLI validation and docs).
+ *
+ * @category Context
+ */
+export const PLUGIN_KINDS: readonly PluginKind[] = [
+  "provider",
+  "executor",
+  "logger",
+  "memory",
+  "tool",
+] as const;
+
+/**
+ * The supported plugin artifact source types.
  *
  * @category Context
  */
 export type ExtensionSourceType = "builtin" | "npm" | "git" | "local";
 
 /**
- * A version string used by extension references and extension manifests.
+ * A version string used by plugin references and manifests.
  *
  * @category Context
  */
 export type ExtensionVersion = string;
 
 /**
- * A portable reference to a loadable extension artifact.
+ * A portable reference to a loadable plugin artifact.
  *
  * @category Context
  */
-export interface ExtensionReference extends BaseMetadata, Extensible {
+export interface PluginReference extends BaseMetadata, Extensible {
   /**
-   * Optional human-readable summary of what this extension provides.
+   * Optional human-readable summary of what this plugin provides.
    */
   description?: string;
 
   /**
-   * The extension kind this reference resolves to.
+   * The plugin kind this reference resolves to.
    */
-  kind: ExtensionKind;
+  kind: PluginKind;
 
   /**
-   * The source type used to resolve this extension.
+   * The source type used to resolve this plugin.
    */
   type: ExtensionSourceType;
 
   /**
-   * Extension version identifier.
+   * Plugin version identifier.
    *
    * For:
-   * - `builtin`: the built-in extension API/runtime version
+   * - `builtin`: the built-in plugin API/runtime version
    * - `npm`: a package version or semver range
    * - `git`: a tag or commit SHA
    * - `local`: a local module version label
@@ -269,81 +285,94 @@ export interface ExtensionReference extends BaseMetadata, Extensible {
 }
 
 /**
- * Runtime security policy for extension loading.
- * Security is always enabled. Use allowKinds and allowSourceTypes only to
- * restrict which extension kinds/source types are allowed (default: all builtin allowed).
+ * Runtime security policy for plugin loading (Context `plugins.security` and,
+ * on the host, system config `security.plugins`).
+ * Security is always enabled. Use `allowKinds` and `allowSourceTypes` only to
+ * restrict which plugin kinds/source types are allowed (default: all builtin allowed).
+ * When `allowKinds` is set and omits `"tool"`, implementations should refuse MCP tool
+ * server connections that are classified as tool plugins.
  *
  * @category Context
  */
-export interface ExtensionSecurityPolicy extends Extensible {
+export interface PluginSecurityPolicy extends Extensible {
   /**
-   * Extension kinds allowed to load at runtime.
-   * When omitted, all kinds are allowed (default: allow all builtin extensions).
+   * Plugin kinds allowed to load at runtime.
+   * When omitted, all kinds are allowed (default: allow all built-in plugins).
+   * Include `"tool"` when Context or system config uses MCP servers under `tools.servers`.
    */
-  allowKinds?: ExtensionKind[];
+  allowKinds?: PluginKind[];
 
   /**
    * Source types allowed to load at runtime.
-   * When omitted, only builtin extensions are allowed.
+   * When omitted, only built-in plugins are allowed.
    */
   allowSourceTypes?: ExtensionSourceType[];
 
   /**
-   * Explicit allow-list of extension IDs (`ExtensionReference.name`).
+   * Explicit allow-list of plugin IDs (`PluginReference.name`).
    */
   allowIds?: string[];
 
   /**
-   * Explicit deny-list of extension IDs (`ExtensionReference.name`).
+   * Explicit deny-list of plugin IDs (`PluginReference.name`).
    */
   denyIds?: string[];
 
   /**
-   * When `true`, unknown or disallowed extension references fail startup.
+   * When `true`, unknown or disallowed plugin references fail startup.
    */
   strict?: boolean;
 }
 
 /**
- * Context-level extension declaration block.
+ * Context-level plugin declaration block.
  *
  * @category Context
  */
-export interface Extensions extends Extensible {
+export interface Plugins extends Extensible {
   /**
-   * Version of the extensions block schema.
+   * Version of the plugins block schema.
    */
   version: ExtensionVersion;
 
   /**
-   * Optional human-readable description of extension usage for this Context.
+   * Optional human-readable description of plugin usage for this Context.
    */
   description?: string;
 
   /**
-   * Registered model provider extension references.
+   * Registered model provider plugins.
    */
-  providers?: ExtensionReference[];
+  providers?: PluginReference[];
 
   /**
-   * Registered executor extension references.
+   * Registered executor plugins.
    */
-  executors?: ExtensionReference[];
+  executors?: PluginReference[];
 
   /**
-   * Registered plugin extension references.
+   * Additional plugins (e.g. loggers, memory stores) that are not providers or executors.
    */
-  plugins?: ExtensionReference[];
+  entries?: PluginReference[];
 
   /**
-   * Per-extension configuration blobs keyed by extension ID.
+   * Per-plugin configuration blobs keyed by plugin ID.
    */
   config?: Record<string, Record<string, unknown>>;
 
   /**
-   * Runtime security controls for extension loading.
+   * Runtime security controls for plugin loading.
    */
-  security?: ExtensionSecurityPolicy;
+  security?: PluginSecurityPolicy;
+}
+
+/**
+ * Returns the Context `plugins` block.
+ *
+ * @category Context
+ */
+export function getContextPlugins(ctx: ECPContext): Plugins | undefined {
+  return ctx.plugins;
 }
 
 // ---------------------------------------------------------------------------
@@ -670,8 +699,8 @@ export type ModelProviderId = string;
  */
 export interface ModelProviderReference extends Extensible {
   /**
-   * Provider ID (must match `ExtensionReference.name` when using
-   * `ECPContext.extensions.providers`).
+   * Provider ID (must match `PluginReference.name` when using
+   * `ECPContext.plugins.providers`).
    */
   name: ModelProviderId;
 
@@ -704,7 +733,7 @@ export interface ModelConfig {
    *
    * Supports:
    * - string IDs (legacy, e.g. `"openai"`)
-   * - structured extension refs (e.g.
+   * - structured plugin refs (e.g.
    *   `{ name: "openai", type: "builtin", version: "0.3.0" }`)
    */
   provider: ModelProviderSelector;

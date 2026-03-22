@@ -2,7 +2,7 @@
 # Run: npx tsx packages/cli/src/index.ts run context.yaml --input topic=test --provider ollama
 # Memory is stored in .ecp/<namespace>-ecp-memory.sqlite (sql.js, portable).
 
-apiVersion: ecp/v0.3-draft
+specVersion: ecp/v0.3-draft
 kind: Context
 
 metadata:
@@ -10,16 +10,16 @@ metadata:
   version: 1.0.0
   description: Single executor with long-term memory; store/recall/cleanup via policy.
 
-extensions:
+plugins:
   version: 1.0.0
   providers:
     - name: ollama
-      kind: model-provider
+      kind: provider
       type: builtin
       version: 0.3.0
-  plugins:
+  entries:
     - name: memory
-      kind: plugin
+      kind: memory
       type: builtin
       version: 0.3.0
       description: Built-in long-term memory store (SQLite via sql.js)

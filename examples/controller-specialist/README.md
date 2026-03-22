@@ -12,12 +12,15 @@ A multi-agent ECP Context demonstrating the delegate orchestration strategy.
 ## Run it
 
 ```bash
-# From the repo root
+# From the repo root (Ollama must be running; default model gemma3:1b)
 ecp run examples/controller-specialist/context.yaml \
+  --provider ollama \
+  --model gemma3:1b \
+  \
   --input subject="Model Context Protocol" \
   --debug
 ```
 
 ## Requirements
 
-- `OPENAI_API_KEY` environment variable set
+- [Ollama](https://ollama.com/) installed and running, with the model you pass to `--model` pulled (e.g. `ollama pull gemma3:1b`).

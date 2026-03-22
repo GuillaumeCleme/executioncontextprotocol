@@ -47,7 +47,7 @@ npm run build
 
 ```bash
 npx ecp validate spec.yaml --input shopifyStoreId=test --input jiraProject=TEST
-npx ecp run examples/single-executor/context.yaml --enable openai -i topic="Getting started"
+npx ecp run examples/single-executor/context.yaml --provider ollama --model gemma3:1b -i topic="Getting started"
 ```
 
 **Option B — global `ecp` command:** link the CLI (compiled `dist/`; no global `tsx` required):
@@ -59,7 +59,7 @@ cd packages/cli && npm link && cd ../..
 Then:
 
 ```bash
-ecp run examples/single-executor/context.yaml --enable openai -i topic="Getting started"
+ecp run examples/single-executor/context.yaml -i topic="Getting started"
 ecp validate examples/single-executor/context.yaml
 ```
 
@@ -71,31 +71,32 @@ Dev without rebuilding (TypeScript source): `npm run start --workspace=@executio
 
 ECP connects to MCP servers at runtime. The CLI no longer accepts `--tool-server` / `--tool-allow` flags; instead:
 
-- **Tool server wiring** comes from your global `ecp.config.yaml` under `toolServers:`.
+- **Tool server wiring** comes from your `ecp.config.yaml` under **`tools.servers`** (v0.5 layout).
 - **Tool permissions** come from each Context manifest under `policies.toolAccess`.
 
-### Tool server wiring (`ecp.config.yaml` -> `toolServers`)
+### Tool server wiring (`ecp.config.yaml` -> `tools.servers`)
 
 For example, to connect a `fetch` tool server via stdio (Docker) and a `remote` tool server via SSE:
 
 ```yaml
-toolServers:
-  fetch:
-    transport:
-      type: stdio
-      command: docker
-      args: [run, -i, --rm, mcp/fetch]
+tools:
+  servers:
+    fetch:
+      transport:
+        type: stdio
+        command: docker
+        args: [run, -i, --rm, mcp/fetch]
 
-  remote:
-    transport:
-      type: sse
-      url: https://example.com/sse
+    remote:
+      transport:
+        type: sse
+        url: https://example.com/sse
 ```
 
 Then you can run without tool-specific CLI flags:
 
 ```bash
-ecp run ctx.yaml --enable openai -i topic="..."
+ecp run ctx.yaml -i topic="..."
 ```
 
 ### Tool permissions (`Context` -> `policies.toolAccess`)
@@ -111,7 +112,7 @@ policies:
       - fetch:search
 ```
 
-The allowed tool refs (like `fetch:fetch`) must use the same `server` name you configure in `ecp.config.yaml` under `toolServers`.
+The allowed tool refs (like `fetch:fetch`) must use the same `server` name you configure in `ecp.config.yaml` under `tools.servers`.
 
 ------------------------------------------------------------------------
 
@@ -168,20 +169,30 @@ Lighter alternative: `ollama pull llama3.2:1b`. Other options with good tool sup
 3. Run ECP with the Ollama provider:
 
    ```bash
-   ecp run examples/single-executor/context.yaml --provider ollama --enable ollama --model llama3.2:3b -i topic="Test"
+   ecp run examples/single-executor/context.yaml --provider ollama --model gemma3:1b -i topic="Test"
    ```
 
    If you didn’t link the CLI, from the repo root (after `npm run build`):
 
    ```bash
-   npx ecp run examples/single-executor/context.yaml --provider ollama --enable ollama --model llama3.2:3b -i topic="Test"
+   npx ecp run examples/single-executor/context.yaml --provider ollama --model gemma3:1b -i topic="Test"
    ```
+
+### MCP tool credentials (secret providers)
+
+Tool and HTTP credentials in Contexts use structured bindings with **`source.provider`** set to one of:
+
+- **`process.env`** — read from the real process environment.
+- **`dot.env`** — read from a `.env`-style file (default path: `secrets.providers.dot.env.path` in `ecp.config.yaml`, or override per run with **`ecp run --environment <path>`** on `run`, `validate`, `trace`, and related commands). This does **not** merge the file into `process.env`.
+- **`os.secrets`** — read from the OS keychain; store values with `ecp config secrets add --provider os.secrets --key <key> --prompt`.
+
+These are **separate namespaces** (not one merged map). Full behavior and examples: [`packages/cli/README.md`](packages/cli/README.md) (Secrets section) and root [`CHANGELOG.md`](CHANGELOG.md) for v0.4.2 breaking renames.
 
 ------------------------------------------------------------------------
 
 ## System Config (ecp.config.yaml)
 
-ECP supports a **system config** file to allow-list extensions and set security policy. The CLI loads it from (in order):
+ECP supports a **system config** file to allow-list plugins and set security policy. The CLI loads it from (in order):
 
 1. Path given by **`--config <path>`**
 2. **`./ecp.config.yaml`** (current directory)
@@ -195,7 +206,7 @@ cp config/ecp.config.example.yaml ecp.config.yaml
 
 Then run without passing `--config`; the CLI will use `./ecp.config.yaml` if present.
 
-See [`config/ecp.config.example.yaml`](config/ecp.config.example.yaml) for `allowEnable`, `defaultEnable`, and `security` options.
+See [`config/ecp.config.example.yaml`](config/ecp.config.example.yaml) for the v0.5 **`security`** mirror, **`models.providers`**, **`tools.servers`**, and related options.
 
 ------------------------------------------------------------------------
 
@@ -211,7 +222,7 @@ See [`config/ecp.config.example.yaml`](config/ecp.config.example.yaml) for `allo
   Then open the generated output (see `packages/docs` for config). A published version may be available at the [Docs badge](https://guillaumecleme.github.io/executioncontextprotocol/) link in the README.
 
 - **Full protocol spec:** [SPEC.md](SPEC.md)  
-- **Architecture and extension registration:** [ARCHITECTURE.md](ARCHITECTURE.md)
+- **Architecture and plugin registration:** [ARCHITECTURE.md](ARCHITECTURE.md)
 
 ------------------------------------------------------------------------
 
@@ -219,9 +230,9 @@ See [`config/ecp.config.example.yaml`](config/ecp.config.example.yaml) for `allo
 
 - **Install deps:** `npm install` or `pnpm install`
 - **Link `ecp` CLI:** `npm run build` then `npm link` from `packages/cli`
-- **Run a Context:** `ecp run <context.yaml> --enable openai -i key=value`
+- **Run a Context:** `ecp run <context.yaml> -i key=value`
 - **Validate:** `ecp validate <context.yaml>`
 - **Use OpenAI:** set `OPENAI_API_KEY`
-- **Use Ollama:** install [Ollama](https://ollama.com/), `ollama pull llama3.2:3b`, then `--provider ollama --enable ollama --model llama3.2:3b`
+- **Use Ollama:** install [Ollama](https://ollama.com/), `ollama pull llama3.2:3b`, then `--provider ollama --model llama3.2:3b`
 - **System config:** copy `config/ecp.config.example.yaml` to `./ecp.config.yaml` or use `--config <path>`
 - **Global `ecp`:** `npm run build` then `npm link` from `packages/cli`

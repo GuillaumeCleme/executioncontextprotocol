@@ -272,7 +272,7 @@ class StaticProvider implements ModelProvider {
 
 function makeExtensibleContext(providerName: string): ECPContext {
   return {
-    apiVersion: "ecp/v0.3-draft",
+    specVersion: "ecp/v0.3-draft",
     kind: "Context",
     metadata: { name: "extensible", version: "1.0.0" },
     schemas: {
@@ -289,12 +289,12 @@ function makeExtensibleContext(providerName: string): ECPContext {
       strategy: "single",
       produces: "Result",
     },
-    extensions: {
+    plugins: {
       version: "1.0.0",
       providers: [
         {
           name: providerName,
-          kind: "model-provider",
+          kind: "provider",
           type: "builtin",
           version: "1.0.0",
         },
@@ -328,8 +328,8 @@ describe("ECPEngine — extensibility registry", () => {
 
     registry.registerModelProvider({
       id: "provider-a",
-      kind: "model-provider",
-      sourceType: "builtin",
+      kind: "provider",
+      source: "builtin",
       version: "1.0.0",
       create() {
         return new StaticProvider("provider-a", { provider: "provider-a" });
@@ -338,7 +338,7 @@ describe("ECPEngine — extensibility registry", () => {
     registry.lock();
 
     const engine = new ECPEngine(fallbackModel, tools, transport, {
-      extensions: {
+      plugins: {
         registry,
         enable: ["provider-a"],
       },
@@ -361,8 +361,8 @@ describe("ECPEngine — extensibility registry", () => {
 
     registry.registerModelProvider({
       id: "provider-a",
-      kind: "model-provider",
-      sourceType: "builtin",
+      kind: "provider",
+      source: "builtin",
       version: "1.0.0",
       create() {
         return new StaticProvider("provider-a", { provider: "provider-a" });
@@ -371,7 +371,7 @@ describe("ECPEngine — extensibility registry", () => {
     registry.lock();
 
     const engine = new ECPEngine(fallbackModel, tools, transport, {
-      extensions: {
+      plugins: {
         registry,
         enable: ["provider-a"],
         security: {
@@ -391,7 +391,7 @@ describe("ECPEngine — extensibility registry", () => {
 
 function makeMemoryContext(): ECPContext {
   return {
-    apiVersion: "ecp/v0.3-draft",
+    specVersion: "ecp/v0.3-draft",
     kind: "Context",
     metadata: { name: "memory-test", version: "1.0.0" },
     schemas: {
@@ -406,9 +406,9 @@ function makeMemoryContext(): ECPContext {
       strategy: "single",
       produces: "Result",
     },
-    extensions: {
+    plugins: {
       version: "1.0.0",
-      providers: [{ name: "mock", kind: "model-provider", type: "builtin", version: "1.0.0" }],
+      providers: [{ name: "mock", kind: "provider", type: "builtin", version: "1.0.0" }],
       security: {},
     },
     executors: [

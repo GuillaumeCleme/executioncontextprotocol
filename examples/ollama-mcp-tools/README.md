@@ -16,7 +16,7 @@ Run:
 
 ```bash
 ecp run examples/ollama-mcp-tools/context-fetch-toolcalling.yaml ^
-  --enable ollama ^
+  ^
   --provider ollama ^
   --model llama3.2:3b ^
   --input url=https://example.com ^
@@ -24,7 +24,7 @@ ecp run examples/ollama-mcp-tools/context-fetch-toolcalling.yaml ^
 
 Notes:
 
-- MCP tool wiring is configured via `toolServers.fetch.transport` in `ecp.config.yaml`.
+- MCP tool wiring is configured via `tools.servers.fetch.transport` in `ecp.config.yaml`.
 - Tool permissions come from the Context manifest (`policies.toolAccess`), not from CLI flags.
 - If you prefer `uvx`, replace the `command/args` with `uvx mcp-server-fetch` and (on Windows) set `PYTHONIOENCODING=utf-8`.
 
@@ -36,7 +36,7 @@ Run:
 
 ```bash
 ecp run examples/ollama-mcp-tools/context-fake-jira-mounts.yaml ^
-  --enable ollama ^
+  ^
   --provider ollama ^
   --model llama3.2:3b ^
   --input project=OPS ^
@@ -44,4 +44,4 @@ ecp run examples/ollama-mcp-tools/context-fake-jira-mounts.yaml ^
 
 Notes:
 
-- MCP tool wiring is configured via `toolServers.test-jira.transport` in `ecp.config.yaml`.
+- MCP tool wiring is configured via `tools.servers.test-jira.transport` in `ecp.config.yaml`.

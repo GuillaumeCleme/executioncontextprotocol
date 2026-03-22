@@ -1,0 +1,40 @@
+---
+description: Oclif CLI conventions — CRUD verbs and command layout for packages/cli
+globs: packages/cli/**/*.ts
+alwaysApply: false
+---
+
+# CLI command conventions (`@executioncontrolprotocol/cli`)
+
+## CRUD verbs
+
+Commands that manipulate a resource (including nested resources) use **only** these action names:
+
+| Verb | Role |
+|------|------|
+| **add** | Create a new entry (fail if it already exists when that would be ambiguous). |
+| **get** | Read / display (replaces names like `list`, `show`, `describe` for resource data). |
+| **remove** | Delete (replaces `delete`, `rm`, `unset` for CLI consistency). |
+| **update** | Change an existing entry (replaces `set`, `edit`, `put` for mutations). |
+
+Meta-commands that are not resource CRUD (e.g. `config init`, `config path`) are exempt.
+
+## Layout
+
+- Prefer **one Oclif command file per action**, nested by topic: e.g. `commands/config/models/allow/add.ts` → `ecp config models allow add`.
+- File names match the CLI segment (`add.ts`, `get.ts`, `remove.ts`, `update.ts`), not hyphenated compound verbs.
+
+## Examples
+
+- Prefer `ecp config get` over `ecp config show` for dumping resolved config.
+- Prefer `ecp config tools update` over `… set` when replacing an existing tool server block.
+- System plugin policy lives under **`ecp config plugins`** (not a duplicate `extensions` topic).
+
+## `ecp config secrets`
+
+- Use **`add`** / **`get`** / **`list`** / **`remove`** only (no `set` / `delete` for this topic).
+- **`list`** is allowed here: it enumerates keyring *keys*, not a single resource body (distinct from **`get`** for one secret’s value).
+
+## Duplicates
+
+Do not add parallel command trees for renamed concepts (e.g. `config extensions` and `config plugins`). One topic per resource; rename in place when terminology changes.

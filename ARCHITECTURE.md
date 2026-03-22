@@ -53,14 +53,14 @@ through existing runtime interfaces.
 
 ### Core Components
 
-#### 1) Extension Descriptor
+#### 1) Plugin descriptor
 
-Common metadata for all extension kinds:
+Common metadata for registered plugins:
 
 - `id` (globally unique, kebab-case)
-- `kind` (`model-provider`, `executor`, `plugin`)
+- `kind` — **`provider`**, **`executor`**, **`logger`**, **`memory`**, or future plugin kinds
 - `version`
-- `apiVersion` (ECP extension API compatibility)
+- `apiVersion` (ECP plugin API compatibility)
 - `capabilities` (declared features)
 - `description` and optional metadata
 
@@ -71,6 +71,7 @@ Factories create runtime instances from validated config:
 - model provider factory -> `ModelProvider`
 - executor factory -> executor runtime adapter
 - plugin factory -> plugin instance with lifecycle hooks
+- plugin factory with `kind: "logger"` -> progress callback (`ProgressCallback`); `kind: "memory"` and future kinds return their own instance shapes
 
 Factories must be pure with explicit dependencies:
 
@@ -185,8 +186,8 @@ This is an architectural target, not final schema:
   - `type`: `npm` | `git` | `local`
   - source-specific fields (`package`, `version`, `repo`, `ref`, `path`)
   - `integrity` (optional but recommended)
-- Extension enable list is **runtime-only** (CLI `--enable` or system config `defaultEnable`). Contexts declare `extensions.providers` but cannot enable extensions themselves; the system/CLI controls which are enabled and can allow-list via system config (`allowEnable`).
-- `extensions.config.<extensionId>`
+- Plugin enable list is **runtime-only** (CLI `--enable` or system config `defaultEnable`). Contexts declare `plugins.providers` but cannot enable plugins themselves; the system/CLI controls which are enabled and can allow-list via system config (`allowEnable`).
+- `plugins.config.<pluginId>`
   - schema-validated config passed to factory/hooks
 
 The final schema should remain minimal and default-deny:
@@ -268,9 +269,13 @@ This allows evolving runtime internals without breaking extension contracts.
 
 ## Phase 5: Spec Integration
 
-- Add `extensions` fields to ECP spec types.
+- Add `plugins` fields to ECP spec types.
 - Regenerate JSON schema.
 - Add validator checks for extension IDs and config shape references.
+
+## Secret providers (tool credentials)
+
+The runtime resolves `tools.servers.*.credentials.bindings` through a **secret registry** using stable provider ids: **`process.env`**, **`dot.env`**, and **`os.secrets`**. Bindings declare which namespace to read; the CLI can override the on-disk `.env` file for **`dot.env`** with **`--environment`** on execution-oriented commands, while `ecp config secrets` uses persisted config only (no `--environment`). Default secret ref ids are **`ecp://<key>`** (provider is not in the URI). OS-backed entries use that string as the keyring target (**`Entry.withTarget`**) so Windows Credential Manager does not append a second `ecp` from the default `username.service` pattern.
 
 ## Testing Strategy for Implementation Phase
 

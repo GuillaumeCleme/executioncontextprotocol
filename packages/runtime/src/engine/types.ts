@@ -10,68 +10,21 @@
 import type {
   ECPContext,
   Executor,
-  ExtensionSecurityPolicy,
-  MemoryScope,
+  PluginSecurityPolicy,
   MountStage,
 } from "@executioncontrolprotocol/spec";
+import type {
+  ExecutionProgressEvent,
+  MemoryStore,
+  ProgressCallback,
+  RunStatus,
+  SecretBroker,
+  SecretPolicyMode,
+  ToolServerCredentialBinding,
+} from "@executioncontrolprotocol/plugins";
 import type { ExtensionRegistry } from "../extensions/registry.js";
 
-// ---------------------------------------------------------------------------
-// Memory (optional long-term store)
-// ---------------------------------------------------------------------------
-
-/**
- * Minimal memory record shape used by the engine when injecting memory.
- *
- * @category Engine
- */
-export interface MemoryRecordLike {
-  id: string;
-  scope: MemoryScope;
-  executorName: string;
-  summary: string;
-  payload?: Record<string, unknown>;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
- * Minimal memory store contract used by the engine. Implementations
- * are provided by the memory plugin (e.g. SQLite store).
- *
- * @category Engine
- */
-export interface MemoryStoreLike {
-  get(
-    scope: MemoryScope,
-    options?: {
-      maxItems?: number;
-      maxTokens?: number;
-      executorName?: string;
-      summariesOnly?: boolean;
-    },
-  ): Promise<MemoryRecordLike[]>;
-
-  put(
-    scope: MemoryScope,
-    executorName: string,
-    summary: string,
-    payload?: Record<string, unknown>,
-    id?: string,
-  ): Promise<MemoryRecordLike>;
-
-  list(
-    scope: MemoryScope,
-    options?: { limit?: number; executorName?: string; olderThan?: string },
-  ): Promise<Pick<MemoryRecordLike, "id" | "summary" | "createdAt">[]>;
-
-  delete(
-    scope: MemoryScope,
-    options?: { id?: string; ids?: string[]; olderThan?: string; executorName?: string },
-  ): Promise<{ deleted: number }>;
-
-  close(): Promise<void>;
-}
+export type { ExecutionProgressEvent, MemoryStore, ProgressCallback, RunStatus };
 
 // ---------------------------------------------------------------------------
 // Inputs
@@ -136,25 +89,6 @@ export interface MountOutput {
 // ---------------------------------------------------------------------------
 // Execution state
 // ---------------------------------------------------------------------------
-
-/**
- * Lifecycle status of an execution run.
- *
- * @category Engine
- */
-export type RunStatus =
-  | "pending"
-  | "loading"
-  | "validating"
-  | "hydrating-seed"
-  | "running-orchestrator"
-  | "delegating"
-  | "hydrating-focus"
-  | "hydrating-deep"
-  | "running-specialist"
-  | "merging"
-  | "completed"
-  | "failed";
 
 /**
  * A log entry recorded during execution.
@@ -300,49 +234,21 @@ export interface ExecutionResult {
 // ---------------------------------------------------------------------------
 
 /**
- * Execution progress event emitted during a run for real-time UI (e.g. CLI spinner).
+ * One MCP (or other) tool server entry: transport plus optional credential bindings.
  *
  * @category Engine
  */
-export type ExecutionProgressEvent =
-  | { type: "phase"; status: RunStatus }
-  | {
-      type: "step_start";
-      step: number;
-      kind: "mount" | "executor" | "model" | "tool" | "delegation";
-      executorName?: string;
-      description: string;
-    }
-  | {
-      type: "step_complete";
-      step: number;
-      kind: "mount" | "executor" | "model" | "tool" | "delegation";
-      executorName?: string;
-      description: string;
-      durationMs: number;
-      /** Chain-of-thought or reasoning from the model when available. */
-      reasoning?: string;
-      /** Executor output when kind is "executor" and the executor produced output. */
-      output?: unknown;
-      /** Token usage for this step (when kind is "executor", from model generation). */
-      tokens?: { prompt: number; completion: number; total: number };
-      /** Model used (when kind is "executor"). */
-      model?: string;
-    }
-  | {
-      type: "executor_reasoning";
-      executorName: string;
-      /** Increment or full reasoning text (chain of thought). */
-      reasoning: string;
-    };
+export interface ToolServerDefinition {
+  transport: Record<string, unknown>;
 
-/**
- * Callback invoked for each progress event during execution.
- * May return a Promise so the host can flush output before the next event.
- *
- * @category Engine
- */
-export type ProgressCallback = (event: ExecutionProgressEvent) => void | Promise<void>;
+  /**
+   * Declarative secret bindings resolved at connect time (stdio env injection).
+   * Values are never stored here — only provider ids and lookup keys.
+   */
+  credentials?: {
+    bindings?: ToolServerCredentialBinding[];
+  };
+}
 
 /**
  * Configuration for tool servers the engine should connect to.
@@ -351,9 +257,7 @@ export type ProgressCallback = (event: ExecutionProgressEvent) => void | Promise
  *
  * @category Engine
  */
-export type ToolServerRegistry = Record<string, {
-  transport: Record<string, unknown>;
-}>;
+export type ToolServerRegistry = Record<string, ToolServerDefinition>;
 
 /**
  * Configuration supplied to the engine at initialization.
@@ -366,6 +270,12 @@ export interface EngineConfig {
    * Keys are logical server names matching `mount.from.server`.
    */
   toolServers?: ToolServerRegistry;
+
+  /**
+   * When non-empty, only MCP servers with these logical names may be connected
+   * (from system config `security.tools.allowServers`).
+   */
+  mcpServerAllowList?: string[];
 
   /**
    * A2A endpoint registry for specialist executors.
@@ -393,7 +303,7 @@ export interface EngineConfig {
    * memory (and have memoryAccess policy) can read/write via injected
    * context and tools.
    */
-  memoryStore?: MemoryStoreLike;
+  memoryStore?: MemoryStore;
 
   /**
    * Optional callback for real-time execution progress (phase, steps, reasoning).
@@ -402,95 +312,226 @@ export interface EngineConfig {
   onProgress?: ProgressCallback | ProgressCallback[];
 
   /**
-   * Runtime extension registration and security configuration.
+   * Runtime plugin registry and security configuration.
    */
-  extensions?: ExtensionRuntimeConfig;
+  plugins?: PluginRuntimeConfig;
+
+  /**
+   * Resolves {@link ToolServerDefinition.credentials} for MCP stdio transports.
+   * When set, stdio servers receive a minimal env plus resolved bindings.
+   */
+  secretBroker?: SecretBroker;
 }
 
 /**
- * Runtime extension controls supplied by the host system.
+ * Runtime plugin controls supplied by the host system.
  *
  * @category Engine
  */
-export interface ExtensionRuntimeConfig {
+export interface PluginRuntimeConfig {
   /**
-   * Extension registry used to resolve providers/executors/plugins.
+   * Plugin registry used to resolve providers, executors, loggers, memory, …
    */
   registry?: ExtensionRegistry;
 
   /**
-   * Extension IDs enabled for this run (e.g. from CLI --enable or system config).
-   * When set, only these extensions may be used. When unset, all providers
-   * declared by the context in extensions.providers are allowed.
+   * Plugin IDs enabled for this run (e.g. from CLI --enable or system config).
+   * When set, only these plugins may be used. When unset, all providers
+   * declared by the context in `plugins.providers` are allowed.
    */
   enable?: string[];
 
   /**
-   * Allow-list of extension IDs that may be enabled. When set, config.enable
+   * Allow-list of plugin IDs that may be enabled. When set, config.enable
    * must be a subset of this list (typically from system config).
    */
   allowEnable?: string[];
 
   /**
-   * System-level extension loading security policy.
+   * System-level plugin loading security policy.
    */
-  security?: ExtensionSecurityPolicy;
+  security?: PluginSecurityPolicy;
+}
+
+/**
+ * Policy subtree for model providers (mirrors `models.providers` keys).
+ *
+ * @category Engine
+ */
+export interface SecurityModelsConfig {
+  /** Provider IDs that may be used. When set, only these are permitted. */
+  allowProviders?: string[];
+  /** Default provider IDs to enable when the CLI does not narrow the set. */
+  defaultProviders?: string[];
+}
+
+/**
+ * Policy for MCP tool server names (mirrors keys under `tools.servers`).
+ *
+ * @category Engine
+ */
+export interface SecurityToolsConfig {
+  /** Logical server names allowed to connect. When set, others are denied. */
+  allowServers?: string[];
+}
+
+/**
+ * Policy for executor plugin instances (mirrors `executors.instances` keys).
+ *
+ * @category Engine
+ */
+export interface SecurityExecutorsConfig {
+  allowExecutors?: string[];
+  defaultEnable?: string[];
+}
+
+/**
+ * Policy for memory stores (mirrors `memory.stores` keys).
+ *
+ * @category Engine
+ */
+export interface SecurityMemoryConfig {
+  allowStores?: string[];
+  defaultStore?: string;
+}
+
+/**
+ * Policy for A2A endpoints (mirrors `agents.endpoints` keys).
+ *
+ * @category Engine
+ */
+export interface SecurityAgentsConfig {
+  allowEndpoints?: string[];
+  defaultEnable?: string[];
+}
+
+/**
+ * Policy for logger plugins (mirrors `loggers.config` keys).
+ *
+ * @category Engine
+ */
+export interface SecurityLoggersConfig {
+  allowEnable?: string[];
+  defaultEnable?: string[];
+}
+
+/**
+ * Policy for secret *provider* IDs (mirrors `secrets.providers` keys).
+ *
+ * @category Engine
+ */
+export interface SecuritySecretsConfig {
+  allowProviders?: string[];
+}
+
+/**
+ * Top-level security block: mirrors each configure area; allow/default/gates only.
+ *
+ * @category Engine
+ */
+export interface SecurityConfig {
+  models?: SecurityModelsConfig;
+  tools?: SecurityToolsConfig;
+  executors?: SecurityExecutorsConfig;
+  memory?: SecurityMemoryConfig;
+  agents?: SecurityAgentsConfig;
+  loggers?: SecurityLoggersConfig;
+  secrets?: SecuritySecretsConfig;
+  /** Global extension / plugin loading policy (not `plugins.installs`). */
+  plugins?: PluginSecurityPolicy;
+}
+
+/**
+ * Per model-provider entry under `models.providers`.
+ *
+ * @category Engine
+ */
+export interface ModelProviderConfig {
+  defaultModel?: string;
+  allowedModels?: string[];
+  /** Provider-specific options (e.g. Ollama `baseURL`). */
+  config?: Record<string, unknown>;
+}
+
+/**
+ * A2A endpoint entry under `agents.endpoints`.
+ *
+ * @category Engine
+ */
+export interface AgentEndpointConfig {
+  url: string;
+  config?: Record<string, unknown>;
+}
+
+/**
+ * Optional install provenance under `plugins.installs`.
+ *
+ * @category Engine
+ */
+export interface PluginInstallEntry {
+  source?: Record<string, unknown>;
+  path?: string;
+  pluginKind?: string;
+  config?: Record<string, unknown>;
 }
 
 /**
  * System configuration for ECP (e.g. ecp.config.yaml).
- * Used to allow-list enabled extensions and set system security policy.
- * Can be loaded from --config path or default locations.
+ * Policy lives under `security`; wiring under `models`, `tools`, `plugins`, etc.
  *
  * @category Engine
  */
 export interface ECPSystemConfig {
   /**
-   * Extension allow-list and defaults.
+   * Schema version of this file (e.g. `"0.5"`). Loaders may validate or warn.
    */
-  extensions?: {
-    /**
-     * Extension IDs that may be enabled at runtime. When set, only these
-     * may appear in the runtime enable list (CLI --enable or config.defaultEnable).
-     */
-    allowEnable?: string[];
+  version?: string;
 
-    /**
-     * Default extension IDs to enable when CLI does not pass --enable.
-     */
-    defaultEnable?: string[];
+  security?: SecurityConfig;
 
-    /**
-     * System-level extension security policy.
-     */
-    security?: ExtensionSecurityPolicy;
+  plugins?: {
+    installs?: Record<string, PluginInstallEntry>;
+  };
+
+  models?: {
+    providers?: Record<string, ModelProviderConfig>;
+  };
+
+  tools?: {
+    servers?: ToolServerRegistry;
+  };
+
+  executors?: {
+    instances?: Record<string, { config?: Record<string, unknown> }>;
+  };
+
+  memory?: {
+    stores?: Record<string, { config?: Record<string, unknown> }>;
+  };
+
+  agents?: {
+    endpoints?: Record<string, AgentEndpointConfig | string>;
   };
 
   /**
-   * Progress logger extensions: which loggers to enable and their config.
-   * Loggers receive the same progress events as the CLI (phase, steps, reasoning).
+   * Per-logger configuration. Allow/default live under `security.loggers`.
    */
-  progressLoggers?: {
-    /**
-     * Default progress logger IDs to enable (e.g. ["file"]).
-     */
-    defaultEnable?: string[];
-
-    /**
-     * Allow-list of progress logger IDs. When set, only these may be enabled.
-     */
-    allowEnable?: string[];
-
-    /**
-     * Per-logger configuration, keyed by logger ID.
-     */
+  loggers?: {
     config?: Record<string, Record<string, unknown>>;
   };
 
   /**
-   * Tool server wiring for MCP connections.
-   * Maps logical server names (used in Context `mount.from.server` and tool refs)
-   * to engine tool-server connection details.
+   * Secret provider defaults and policy (values live in providers, not in this file).
    */
-  toolServers?: ToolServerRegistry;
+  secrets?: {
+    defaultProvider?: string;
+    policy?: SecretPolicyMode;
+    providers?: Record<
+      string,
+      {
+        enabled?: boolean;
+        path?: string;
+      }
+    >;
+  };
 }
