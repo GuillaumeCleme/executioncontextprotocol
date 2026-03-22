@@ -45,7 +45,7 @@ security:
 
   # MCP tool servers — logical names under `tools.servers`.
   tools:
-    allowServers: [fetch, test-jira, remote]
+    allowServers: [fetch, test-jira, remote, jira, confluence, shopify]
 
   # Executor plugins — IDs under `executors.instances` (when configured).
   executors:
@@ -128,6 +128,31 @@ tools:
       #       delivery: env
 
     test-jira:
+      transport:
+        type: stdio
+        command: npx
+        args: [tsx, examples/ollama-mcp-tools/servers/fake-mcp-server.ts]
+        cwd: .
+      config: {}
+
+    # Logical names used by repo root spec.yaml (weekly-ecom-ops mounts).
+    jira:
+      transport:
+        type: stdio
+        command: npx
+        args: [tsx, examples/ollama-mcp-tools/servers/fake-mcp-server.ts]
+        cwd: .
+      config: {}
+
+    confluence:
+      transport:
+        type: stdio
+        command: npx
+        args: [tsx, examples/ollama-mcp-tools/servers/fake-mcp-server.ts]
+        cwd: .
+      config: {}
+
+    shopify:
       transport:
         type: stdio
         command: npx
