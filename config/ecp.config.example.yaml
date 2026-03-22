@@ -31,7 +31,7 @@ version: "0.5"
 
 # ----------------------------------------------------------------------
 # Security — mirrors each capability area below: allow / default / gates only
-# (edit via `ecp config security` when implemented). Does not hold transport or secrets values.
+# Edit via `ecp config security …` (allow/deny subcommands). Does not hold transport or secrets values.
 # ----------------------------------------------------------------------
 
 security:
@@ -76,7 +76,7 @@ security:
     allowIds: [openai, ollama, file, memory]
 
 # ----------------------------------------------------------------------
-# Plugins — installs and packaged-plugin metadata (`ecp config plugins install`)
+# Plugins — installs and packaged-plugin metadata (`ecp config plugins installs …`)
 # Populated by the installer; not where allow-lists live. Each install accepts `config`.
 # ----------------------------------------------------------------------
 
@@ -89,7 +89,7 @@ security:
 #       config: {}
 
 # ----------------------------------------------------------------------
-# Models — model providers (`ecp config models` …). Cross-provider fields at entry root;
+# Models — model providers (`ecp config add|update --type models --provider <id> --default-model … --allowed-models … --option key=value …` or `--file …`). Cross-provider fields at entry root;
 # provider-specific options under `config`.
 # ----------------------------------------------------------------------
 
@@ -106,7 +106,7 @@ models:
         baseURL: http://localhost:11434
 
 # ----------------------------------------------------------------------
-# Tools — MCP servers (`ecp config tools` …). Each server: transport (+ credentials) + `config`.
+# Tools — MCP servers (`ecp config add|update --type tools <name> --transport-type stdio|sse …` or `--file …`). Each server: transport (+ credentials) + `config`.
 # ----------------------------------------------------------------------
 
 tools:

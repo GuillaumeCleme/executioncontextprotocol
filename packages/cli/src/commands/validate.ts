@@ -56,7 +56,7 @@ export default class Validate extends EcpEnvironmentCommand {
   };
 
   static args = {
-    contextPath: Args.string({
+    "context-path": Args.string({
       required: true,
       description: "Path to context.yaml (or context.json)",
     }),
@@ -65,7 +65,7 @@ export default class Validate extends EcpEnvironmentCommand {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Validate);
     this.applyEnvironmentFlag(flags);
-    const contextPath = resolve(args.contextPath);
+    const contextPath = resolve(args["context-path"]);
 
     console.log(`\nValidating: ${contextPath}\n`);
 

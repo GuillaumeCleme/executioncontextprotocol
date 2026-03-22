@@ -126,12 +126,6 @@ export function removeId(list: string[] | undefined, id: string): string[] {
   return (list ?? []).filter((x) => x !== id);
 }
 
-export type ModelProviderId = "openai" | "ollama";
-
-export function isModelProviderId(s: string): s is ModelProviderId {
-  return s === "openai" || s === "ollama";
-}
-
 /** Ensure `config.security` exists for in-place mutation. */
 export function touchSecurity(config: ECPSystemConfig): SecurityConfig {
   config.security ??= {};

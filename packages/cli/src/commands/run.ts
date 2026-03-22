@@ -133,7 +133,7 @@ export default class Run extends EcpEnvironmentCommand {
   };
 
   static args = {
-    contextPath: Args.string({
+    "context-path": Args.string({
       required: true,
       description: "Path to context.yaml (or context.json)",
     }),
@@ -143,7 +143,7 @@ export default class Run extends EcpEnvironmentCommand {
     const { args, flags } = await this.parse(Run);
     this.applyEnvironmentFlag(flags);
 
-    const contextPath = resolve(args.contextPath);
+    const contextPath = resolve(args["context-path"]);
     const inputs = (() => {
       try {
         return parseKeyValueInputs(flags.input as string[] | undefined, "--input");

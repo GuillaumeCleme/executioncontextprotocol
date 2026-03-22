@@ -30,11 +30,12 @@ ecp config init                    # best-practices starter in current directory
 ecp config init --global          # ~/.ecp/config.yaml
 ecp config path                    # resolved file path (use --for-write for mutation target)
 ecp config get --format json
+ecp config get --type tools        # wiring slice (also: models, loggers, endpoints)
+ecp config add --type tools NAME --transport-type stdio --stdio-command npx --stdio-arg -y --stdio-arg @modelcontextprotocol/server-fetch
 ecp config security get
+ecp config security               # list policy subcommands
+ecp config security models allow add ollama
 ecp config plugins get             # plugins.installs + security.plugins summary
-ecp config models get
-ecp config tools get
-ecp config loggers get
 ecp config secrets yaml get
 ```
 
