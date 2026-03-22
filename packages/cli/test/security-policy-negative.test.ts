@@ -33,6 +33,8 @@ ${SECURITY_STUB}
 security:
   models:
     allowProviders: ["openai"]
+    allowedModels:
+      openai: [gpt-4o-mini]
   tools: {}
   executors: {}
   memory: {}
@@ -42,9 +44,12 @@ security:
   plugins: {}
 models:
   providers:
+    openai:
+      defaultModel: gpt-4o-mini
+      supportedModels: [gpt-4o-mini]
     ollama:
       defaultModel: gemma3:1b
-      allowedModels: [gemma3:1b]
+      supportedModels: [gemma3:1b]
 `,
       "utf-8",
     );
@@ -72,6 +77,9 @@ ${SECURITY_STUB}
 security:
   models:
     allowProviders: ["openai", "ollama"]
+    allowedModels:
+      openai: [gpt-4o-mini]
+      ollama: [gemma3:1b]
   tools: {}
   executors: {}
   memory: {}
@@ -81,9 +89,12 @@ security:
   plugins: {}
 models:
   providers:
+    openai:
+      defaultModel: gpt-4o-mini
+      supportedModels: [gpt-4o-mini]
     ollama:
       defaultModel: gemma3:1b
-      allowedModels: [gemma3:1b]
+      supportedModels: [gemma3:1b]
 `,
       "utf-8",
     );
@@ -96,6 +107,8 @@ ${SECURITY_STUB}
 security:
   models:
     allowProviders: ["openai"]
+    allowedModels:
+      openai: [gpt-4o-mini]
   tools: {}
   executors: {}
   memory: {}

@@ -6,6 +6,7 @@
  */
 
 import { PLUGIN_KINDS } from "@executioncontrolprotocol/spec";
+import { getEffectiveSupportedModels } from "./model-policy.js";
 import { SYSTEM_CONFIG_SCHEMA_VERSION } from "./system-config-loader.js";
 import type { ECPSystemConfig, SecurityConfig } from "./types.js";
 
@@ -66,6 +67,8 @@ export function validateSystemConfigAgainstSpec(config: ECPSystemConfig): string
 
   const allowProviders = sec.models?.allowProviders;
   const providers = config.models?.providers;
+  const securityAllowedModels = sec.models?.allowedModels;
+
   if (allowProviders?.length && isNonEmptyObject(providers)) {
     for (const id of allowProviders) {
       if (!(id in providers)) {
@@ -76,14 +79,42 @@ export function validateSystemConfigAgainstSpec(config: ECPSystemConfig): string
     }
   }
 
+  if (allowProviders?.length) {
+    for (const id of allowProviders) {
+      const list = securityAllowedModels?.[id];
+      if (!list || list.length === 0) {
+        errors.push(
+          `security.models.allowedModels for provider ${JSON.stringify(id)} must be a non-empty array when ${JSON.stringify(id)} is in security.models.allowProviders`,
+        );
+      }
+    }
+  }
+
   if (isNonEmptyObject(providers)) {
     for (const [id, block] of Object.entries(providers)) {
       const dm = block?.defaultModel;
-      const am = block?.allowedModels;
-      if (dm !== undefined && am !== undefined && am.length > 0 && !am.includes(dm)) {
+      const supported = getEffectiveSupportedModels(block);
+      if (dm !== undefined && supported !== undefined && supported.length > 0 && !supported.includes(dm)) {
         errors.push(
-          `models.providers.${id}.defaultModel ${JSON.stringify(dm)} is not listed in models.providers.${id}.allowedModels`,
+          `models.providers.${id}.defaultModel ${JSON.stringify(dm)} is not in the supported model set for models.providers.${id} (supportedModels or defaultModel-only fallback)`,
         );
+      }
+    }
+  }
+
+  if (isNonEmptyObject(providers) && securityAllowedModels && isNonEmptyObject(securityAllowedModels)) {
+    for (const [providerId, modelNames] of Object.entries(securityAllowedModels)) {
+      if (!Array.isArray(modelNames)) continue;
+      const block = providers![providerId];
+      if (!block) continue;
+      const supported = getEffectiveSupportedModels(block);
+      if (!supported?.length) continue;
+      for (const m of modelNames) {
+        if (!supported.includes(m)) {
+          errors.push(
+            `security.models.allowedModels.${providerId} includes ${JSON.stringify(m)} which is not supported by models.providers.${providerId} (supportedModels / defaultModel)`,
+          );
+        }
       }
     }
   }

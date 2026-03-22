@@ -3,7 +3,12 @@
  * loggers.config, agents.endpoints). Policy lives under security.* only.
  */
 
-import type { ECPSystemConfig, ModelProviderConfig, SecurityConfig } from "@executioncontrolprotocol/runtime";
+import {
+  type ECPSystemConfig,
+  getEffectiveSupportedModels,
+  type ModelProviderConfig,
+  type SecurityConfig,
+} from "@executioncontrolprotocol/runtime";
 
 export const WIRING_TYPES = ["tools", "models", "loggers", "endpoints"] as const;
 export type WiringType = (typeof WIRING_TYPES)[number];
@@ -90,19 +95,44 @@ export function ensureSecurityAgentEndpointAllowed(config: ECPSystemConfig, name
 }
 
 /**
- * Ensure `defaultModel` appears in `allowedModels` when a default is set.
+ * After wiring `models.providers.<id>`, ensure `security.models.allowProviders` and
+ * `security.models.allowedModels` are seeded so the file passes structural validation.
  *
  * @category Config CLI
  */
-export function normalizeModelProviderDefaultInAllowed(block: ModelProviderConfig): ModelProviderConfig {
+export function ensureSecurityModelPolicyFromWiring(config: ECPSystemConfig, providerId: string): void {
+  ensureSecurityAreaObjects(config);
+  const block = config.models?.providers?.[providerId];
+  if (!block) return;
+  const supported = getEffectiveSupportedModels(block);
+  if (!supported?.length) return;
+
+  const sec = config.security!.models!;
+  const ap = sec.allowProviders ?? [];
+  if (!ap.includes(providerId)) {
+    sec.allowProviders = [...ap, providerId];
+  }
+
+  const am = sec.allowedModels ?? {};
+  if (!am[providerId]?.length) {
+    sec.allowedModels = { ...am, [providerId]: [...supported] };
+  }
+}
+
+/**
+ * Ensure `defaultModel` appears in `supportedModels` when a default is set.
+ *
+ * @category Config CLI
+ */
+export function normalizeModelProviderDefaultInSupported(block: ModelProviderConfig): ModelProviderConfig {
   const dm = block.defaultModel;
   if (dm === undefined) return block;
-  const am = block.allowedModels;
-  if (!am || am.length === 0) {
-    return { ...block, allowedModels: [dm] };
+  const sm = block.supportedModels;
+  if (!sm || sm.length === 0) {
+    return { ...block, supportedModels: [dm] };
   }
-  if (am.includes(dm)) return block;
-  return { ...block, allowedModels: [...am, dm] };
+  if (sm.includes(dm)) return block;
+  return { ...block, supportedModels: [...sm, dm] };
 }
 
 /** Shallow merge provider fields; deep-merge `config` when both sides are objects. */
@@ -127,7 +157,7 @@ export function mergeModelProviderBlock(
       out[k] = v;
     }
   }
-  return normalizeModelProviderDefaultInAllowed(out as ModelProviderConfig);
+  return normalizeModelProviderDefaultInSupported(out as ModelProviderConfig);
 }
 
 export function wiringToolsAdd(
@@ -318,7 +348,7 @@ export function formatModelsWiringSummary(config: ECPSystemConfig): string {
       continue;
     }
     if (block.defaultModel) lines.push(`  defaultModel: ${block.defaultModel}`);
-    if (block.allowedModels?.length) lines.push(`  allowedModels: ${block.allowedModels.join(", ")}`);
+    if (block.supportedModels?.length) lines.push(`  supportedModels: ${block.supportedModels.join(", ")}`);
     if (block.config && Object.keys(block.config).length > 0) {
       lines.push(`  config: ${JSON.stringify(block.config)}`);
     }

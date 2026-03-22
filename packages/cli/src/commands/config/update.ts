@@ -12,6 +12,7 @@ import {
   assertToolServerEntry,
   ensureSecurityAgentEndpointAllowed,
   ensureSecurityLoggerAllowed,
+  ensureSecurityModelPolicyFromWiring,
   ensureSecurityToolServerAllowed,
   isWiringType,
   wiringEndpointsMergeConfig,
@@ -24,9 +25,9 @@ import { persistConfig, readForMutation } from "../../lib/system-config-cli.js";
 
 function hasModelsCliPayload(flags: Record<string, unknown>): boolean {
   const dm = flags["default-model"] as string | undefined;
-  const am = flags["allowed-models"] as string[] | undefined;
+  const sm = flags["supported-models"] as string[] | undefined;
   const opt = flags.option as string[] | undefined;
-  return Boolean(dm || (am && am.length > 0) || (opt && opt.length > 0));
+  return Boolean(dm || (sm && sm.length > 0) || (opt && opt.length > 0));
 }
 
 function hasEndpointsExtraPayload(flags: { file?: string; option?: string[] }): boolean {
@@ -62,8 +63,9 @@ export default class ConfigUpdate extends Command {
     "default-model": Flags.string({
       description: "Default model id (--type models; not with --file)",
     }),
-    "allowed-models": Flags.string({
-      description: "Allowed model id (repeatable; comma-separated values allowed per occurrence) (--type models)",
+    "supported-models": Flags.string({
+      description:
+        "Supported model id for wiring (repeatable; comma-separated values allowed per occurrence) (--type models)",
       multiple: true,
     }),
     option: Flags.string({
@@ -175,7 +177,7 @@ export default class ConfigUpdate extends Command {
         const providerId = flags.provider;
         if (!providerId) this.error("Provide --provider for --type models.", { exit: 1 });
         if (flags.file && hasModelsCliPayload(flags)) {
-          this.error("Use either --file or model flags (--default-model, --allowed-models, --option), not both.", {
+          this.error("Use either --file or model flags (--default-model, --supported-models, --option), not both.", {
             exit: 1,
           });
         }
@@ -186,17 +188,18 @@ export default class ConfigUpdate extends Command {
         } else {
           const patch = buildModelProviderPatchFromFlags({
             defaultModel: flags["default-model"] as string | undefined,
-            allowedModelsRaw: flags["allowed-models"] as string[] | undefined,
+            supportedModelsRaw: flags["supported-models"] as string[] | undefined,
             optionFlags: flags.option,
           });
           if (Object.keys(patch).length === 0) {
             this.error(
-              "Provide --file or at least one of --default-model, --allowed-models, --option for models.",
+              "Provide --file or at least one of --default-model, --supported-models, --option for models.",
               { exit: 1 },
             );
           }
           wiringModelsUpdateProvider(config, providerId, patch);
         }
+        ensureSecurityModelPolicyFromWiring(config, providerId);
         this.log(`Updated models.providers.${providerId} (${path})`);
       } else if (t === "endpoints") {
         const name = args.name;

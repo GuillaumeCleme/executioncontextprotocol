@@ -24,7 +24,7 @@ Without **`--config`**, the CLI looks for **`./ecp.config.yaml`** / **`./ecp.con
 
 ### System config (`ecp.config.yaml` / `~/.ecp/config.yaml`)
 
-**v0.5 layout:** use top-level **`security`** for allow-lists and defaults (mirrors `models`, `tools`, `loggers`, …). Wiring lives under **`models.providers`**, **`tools.servers`**, **`loggers.config`**, **`agents.endpoints`**, **`plugins.installs`**, **`secrets`**. Set **`version: "0.5"`**.
+**v0.5 layout:** use top-level **`security`** for allow-lists and defaults (mirrors `models`, `tools`, `loggers`, …). Wiring lives under **`models.providers`** (use **`supportedModels`** per provider), **`tools.servers`**, **`loggers.config`**, **`agents.endpoints`**, **`plugins.installs`**, **`secrets`**. Per-provider model **policy** is **`security.models.allowedModels`** (map of provider id to model name lists). Set **`version: "0.5"`**.
 
 ```bash
 ecp config --help

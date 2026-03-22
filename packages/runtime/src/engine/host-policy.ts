@@ -54,6 +54,19 @@ export function collectModelProviderIdsFromContext(context: ECPContext): string[
   return [...ids].sort();
 }
 
+/**
+ * Plugin provider names declared on the Context (`plugins.providers[].name`).
+ *
+ * @category Engine
+ */
+export function collectContextPluginProviderNames(context: ECPContext): string[] {
+  const names = new Set<string>();
+  for (const p of context.plugins?.providers ?? []) {
+    if (p.name) names.add(p.name);
+  }
+  return [...names].sort();
+}
+
 function assertModelsProviderWired(providerId: string, systemConfig: ECPSystemConfig | undefined): void {
   if (!systemConfig) return;
   const block = systemConfig.models?.providers?.[providerId];
@@ -149,6 +162,18 @@ export function assertHostPolicyForContext(context: ECPContext, systemConfig: EC
         `Allowed IDs: ${allowIds.join(", ")}\n` +
         `Update your config first (ecp.config.yaml / ecp config) and rerun.`,
     );
+  }
+
+  if (allowIds?.length) {
+    for (const name of collectContextPluginProviderNames(context)) {
+      if (!allowIds.includes(name)) {
+        throw new Error(
+          `Context declares plugin provider "${name}" but it is not in system config security.plugins.allowIds.\n` +
+            `Allowed IDs: ${allowIds.join(", ")}\n` +
+            `Update security policy or the Context.`,
+        );
+      }
+    }
   }
 
   const effectiveModel = resolveEffectiveModelNameForProvider(options.providerId, options.selectedModel, systemConfig);

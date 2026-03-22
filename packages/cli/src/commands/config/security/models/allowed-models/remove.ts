@@ -1,6 +1,7 @@
 import { Args, Command } from "@oclif/core";
 
 import { configScopeFlags } from "../../../../../lib/config-flags.js";
+import { ensureSecurityAreaObjects } from "../../../../../lib/config-wiring-ops.js";
 import {
   persistConfig,
   readForMutation,
@@ -8,7 +9,7 @@ import {
 } from "../../../../../lib/system-config-cli.js";
 
 export default class ConfigSecurityModelsAllowedModelsRemove extends Command {
-  static summary = "Remove a model name from models.providers.<provider>.allowedModels";
+  static summary = "Remove a model name from security.models.allowedModels.<provider>";
 
   static args = {
     provider: Args.string({ required: true, description: "Model provider id" }),
@@ -26,14 +27,15 @@ export default class ConfigSecurityModelsAllowedModelsRemove extends Command {
       explicit: flags.config as string | undefined,
     });
 
-    config.models ??= {};
-    config.models.providers ??= {};
+    ensureSecurityAreaObjects(config);
+    const sec = config.security!.models!;
+    sec.allowedModels ??= {};
     const prov = args.provider;
-    config.models.providers[prov] ??= {};
-    const block = config.models.providers[prov]!;
-    block.allowedModels = removeId(block.allowedModels, args.model);
+    sec.allowedModels[prov] = removeId(sec.allowedModels[prov], args.model);
 
     persistConfig(path, config);
-    this.log(`Updated ${prov}.allowedModels (${path}): ${block.allowedModels?.join(", ") ?? "(empty)"}`);
+    this.log(
+      `Updated security.models.allowedModels.${prov} (${path}): ${sec.allowedModels[prov]?.join(", ") ?? "(empty)"}`,
+    );
   }
 }

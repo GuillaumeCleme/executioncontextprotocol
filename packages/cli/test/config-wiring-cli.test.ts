@@ -18,28 +18,28 @@ describe("parseUniqueOptionFlags", () => {
 });
 
 describe("buildModelProviderPatchFromFlags", () => {
-  it("builds defaultModel, allowedModels, and config", () => {
+  it("builds defaultModel, supportedModels, and config", () => {
     expect(
       buildModelProviderPatchFromFlags({
         defaultModel: "gpt-4o-mini",
-        allowedModelsRaw: ["gpt-4o-mini", "gpt-4o"],
+        supportedModelsRaw: ["gpt-4o-mini", "gpt-4o"],
         optionFlags: ["baseURL=http://localhost:11434"],
       }),
     ).toEqual({
       defaultModel: "gpt-4o-mini",
-      allowedModels: ["gpt-4o-mini", "gpt-4o"],
+      supportedModels: ["gpt-4o-mini", "gpt-4o"],
       config: { baseURL: "http://localhost:11434" },
     });
   });
 
-  it("adds defaultModel to allowedModels when only default is set", () => {
+  it("adds defaultModel to supportedModels when only default is set", () => {
     expect(
       buildModelProviderPatchFromFlags({
         defaultModel: "gpt-4.1",
       }),
     ).toEqual({
       defaultModel: "gpt-4.1",
-      allowedModels: ["gpt-4.1"],
+      supportedModels: ["gpt-4.1"],
     });
   });
 });

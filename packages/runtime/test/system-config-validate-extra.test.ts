@@ -4,7 +4,7 @@ import { validateSystemConfigAgainstSpec } from "../src/engine/system-config-val
 import type { ECPSystemConfig } from "../src/engine/types.js";
 
 describe("validateSystemConfigAgainstSpec default subsets", () => {
-  it("errors when defaultModel not in allowedModels", () => {
+  it("errors when defaultModel not in supported model set", () => {
     const config: ECPSystemConfig = {
       version: "0.5",
       security: {
@@ -21,13 +21,42 @@ describe("validateSystemConfigAgainstSpec default subsets", () => {
         providers: {
           openai: {
             defaultModel: "gpt-4.1",
-            allowedModels: ["gpt-4o-mini"],
+            supportedModels: ["gpt-4o-mini"],
           },
         },
       },
     };
     const errors = validateSystemConfigAgainstSpec(config);
-    expect(errors.some((e) => e.includes("defaultModel") && e.includes("allowedModels"))).toBe(true);
+    expect(errors.some((e) => e.includes("defaultModel") && e.includes("supported"))).toBe(true);
+  });
+
+  it("errors when security.models.allowProviders lists a provider but allowedModels for that provider is empty", () => {
+    const config: ECPSystemConfig = {
+      version: "0.5",
+      security: {
+        models: {
+          allowProviders: ["openai"],
+          allowedModels: {},
+        },
+        tools: {},
+        executors: {},
+        memory: {},
+        agents: {},
+        loggers: {},
+        secrets: {},
+        plugins: {},
+      },
+      models: {
+        providers: {
+          openai: {
+            defaultModel: "gpt-4o-mini",
+            supportedModels: ["gpt-4o-mini"],
+          },
+        },
+      },
+    };
+    const errors = validateSystemConfigAgainstSpec(config);
+    expect(errors.some((e) => e.includes("allowedModels") && e.includes("openai"))).toBe(true);
   });
 
   it("errors when executors defaultEnable not in allowExecutors", () => {

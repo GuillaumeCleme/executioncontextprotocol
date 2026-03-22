@@ -47,23 +47,23 @@ export function parseUniqueOptionFlags(
  */
 export function buildModelProviderPatchFromFlags(options: {
   defaultModel?: string;
-  allowedModelsRaw?: string[];
+  supportedModelsRaw?: string[];
   optionFlags?: string[];
 }): Record<string, unknown> {
   const patch: Record<string, unknown> = {};
   if (options.defaultModel !== undefined) {
     patch.defaultModel = options.defaultModel;
   }
-  const allowed = splitCommaSeparated(options.allowedModelsRaw);
-  if (allowed.length > 0) {
-    patch.allowedModels = allowed;
+  const supported = splitCommaSeparated(options.supportedModelsRaw);
+  if (supported.length > 0) {
+    patch.supportedModels = supported;
   }
   if (options.defaultModel !== undefined) {
-    const cur = patch.allowedModels as string[] | undefined;
+    const cur = patch.supportedModels as string[] | undefined;
     if (!cur || cur.length === 0) {
-      patch.allowedModels = [options.defaultModel];
+      patch.supportedModels = [options.defaultModel];
     } else if (!cur.includes(options.defaultModel)) {
-      patch.allowedModels = [...cur, options.defaultModel];
+      patch.supportedModels = [...cur, options.defaultModel];
     }
   }
   const opts = parseUniqueOptionFlags(options.optionFlags);

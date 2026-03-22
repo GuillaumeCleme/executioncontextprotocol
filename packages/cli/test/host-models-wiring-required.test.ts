@@ -13,7 +13,9 @@ const marketingCtx = join(repoRoot, "examples", "marketing-campaign-ollama", "co
 
 const SECURITY_STUB = `security:
   models:
-    allowProviders: [openai, ollama]
+    allowProviders: [openai]
+    allowedModels:
+      openai: [gpt-4o-mini]
   tools: {}
   executors: {}
   memory: {}
@@ -35,7 +37,7 @@ models:
   providers:
     openai:
       defaultModel: gpt-4o-mini
-      allowedModels: [gpt-4o-mini]
+      supportedModels: [gpt-4o-mini]
 `,
       "utf-8",
     );

@@ -10,7 +10,7 @@ alwaysApply: false
 
 CLI user input uses the **same casing style as enum / union literal values** in `.cursor/rules/typescript.mdc` (**kebab-case**). That is a **different layer** from **TypeScript field names** (camelCase in types and YAML): the shell shows `--default-model`, while the saved field remains `defaultModel`.
 
-- **Long flags:** **kebab-case** with hyphens between words (`--default-model`, `--allowed-models`, `--stdio-command`, `--transport-type`). **Never** camelCase (`--defaultModel`) or **snake_case** (`--default_model`) in flag names.
+- **Long flags:** **kebab-case** with hyphens between words (`--default-model`, `--supported-models`, `--stdio-command`, `--transport-type`). **Never** camelCase (`--defaultModel`) or **snake_case** (`--default_model`) in flag names.
 - **Single-word** long flags: **lowercase** (`--file`, `--provider`, `--type`, `--url`, `--global`). A single segment is still consistent with kebab-case (no inner hyphens needed).
 - **Flag values** that are closed sets aligned with the spec (e.g. strategy, mount stage) **must** use the same **kebab-case** literals as in `ecp.ts` / manifests (`stdio`, `sse`, `controller-specialist`, … — use the canonical string from the type union).
 - **Subcommand segments** in the topic path (`ecp config security loggers allow add`, `allowed-models`, …): **kebab-case** for multi-word segments; match spec vocabulary where applicable.

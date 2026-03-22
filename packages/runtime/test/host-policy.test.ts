@@ -89,7 +89,7 @@ describe("assertHostPolicyForContext", () => {
       },
       models: {
         providers: {
-          openai: { defaultModel: "gpt-4o-mini", allowedModels: ["gpt-4o-mini"] },
+          openai: { defaultModel: "gpt-4o-mini", supportedModels: ["gpt-4o-mini"] },
         },
       },
     };
@@ -120,7 +120,7 @@ describe("assertHostPolicyForContext", () => {
     const cfg: ECPSystemConfig = {
       models: {
         providers: {
-          openai: { defaultModel: "gpt-4o-mini", allowedModels: ["gpt-4o-mini"] },
+          openai: { defaultModel: "gpt-4o-mini", supportedModels: ["gpt-4o-mini"] },
         },
       },
     };
@@ -151,7 +151,7 @@ describe("assertHostPolicyForContext", () => {
     const cfg: ECPSystemConfig = {
       models: {
         providers: {
-          openai: { defaultModel: "gpt-4o-mini", allowedModels: ["gpt-4o-mini"] },
+          openai: { defaultModel: "gpt-4o-mini", supportedModels: ["gpt-4o-mini"] },
         },
       },
       tools: {
@@ -197,7 +197,7 @@ describe("assertHostPolicyForContext", () => {
     const cfg: ECPSystemConfig = {
       models: {
         providers: {
-          openai: { defaultModel: "gpt-4o-mini", allowedModels: ["gpt-4o-mini"] },
+          openai: { defaultModel: "gpt-4o-mini", supportedModels: ["gpt-4o-mini"] },
         },
       },
       tools: {
