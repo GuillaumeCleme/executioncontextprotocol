@@ -93,7 +93,8 @@ export function loadEcpPluginManifest(packageRoot: string): EcpPluginManifest {
 }
 
 function runCommand(cmd: string, args: string[], cwd: string): void {
-  const res = spawnSync(cmd, args, { cwd, stdio: "inherit", shell: false });
+  const shell = process.platform === "win32" && (cmd === "npm" || cmd === "npx");
+  const res = spawnSync(cmd, args, { cwd, stdio: "inherit", shell });
   if (res.error) {
     throw res.error;
   }
@@ -132,6 +133,8 @@ export interface InstallPluginOptions {
   source: PluginInstallSource;
   /** When set, existing install dir is removed first. */
   force?: boolean;
+  /** Allow installs without an ECP manifest so callers can provide a shim. */
+  allowMissingManifest?: boolean;
   systemConfig: ECPSystemConfig;
 }
 
@@ -142,7 +145,7 @@ export interface InstallPluginOptions {
  */
 export function materializePluginArtifact(options: InstallPluginOptions): {
   packageRoot: string;
-  manifest: EcpPluginManifest;
+  manifest: EcpPluginManifest | undefined;
   source: PluginInstallSource;
 } {
   const destDir = resolvePluginInstallDir(options.cwd, options.global, options.installId);
@@ -161,6 +164,7 @@ export function materializePluginArtifact(options: InstallPluginOptions): {
       const packRes = spawnSync("npm", ["pack", options.source.spec, "--pack-destination", tmp], {
         encoding: "utf8",
         stdio: "pipe",
+        shell: process.platform === "win32",
       });
       if (packRes.error) throw packRes.error;
       if (packRes.status !== 0) {
@@ -190,15 +194,24 @@ export function materializePluginArtifact(options: InstallPluginOptions): {
   }
 
   const packageRoot = findPackageRoot(destDir);
-  const manifest = loadEcpPluginManifest(packageRoot);
-  if (manifest.id !== options.installId) {
+  let manifest: EcpPluginManifest | undefined;
+  try {
+    manifest = loadEcpPluginManifest(packageRoot);
+  } catch (error) {
+    if (!options.allowMissingManifest) {
+      throw error;
+    }
+  }
+  if (manifest && manifest.id !== options.installId) {
     throw new Error(
       `Manifest id "${manifest.id}" does not match install id "${options.installId}". Fix the package manifest or use the matching id.`,
     );
   }
 
-  const policy = getSecurityConfig(options.systemConfig)?.plugins;
-  assertPluginPermittedByPolicy(manifest, options.source, policy);
+  if (manifest) {
+    const policy = getSecurityConfig(options.systemConfig)?.plugins;
+    assertPluginPermittedByPolicy(manifest, options.source, policy);
+  }
 
   return { packageRoot, manifest, source: options.source };
 }

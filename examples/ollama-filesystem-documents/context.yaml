@@ -1,0 +1,82 @@
+specVersion: ecp/v0.5-draft
+kind: Context
+
+metadata:
+  name: ollama-filesystem-documents
+  version: 1.0.0
+  description: Ollama agent lists files via MCP filesystem (list_directory on a configured root)
+
+plugins:
+  version: 1.0.0
+  providers:
+    - name: ollama
+      kind: provider
+      type: builtin
+      version: 0.3.0
+  security: {}
+
+inputs:
+  rootPath:
+    type: string
+    required: true
+    description: "Directory to list. Must be allowed by tools.servers.filesystem in system config (e.g. examples/ollama-filesystem-documents/sample-docs from repo root)."
+  query:
+    type: string
+    required: false
+    description: "Optional substring to filter file basenames (case-insensitive). Omit to include every file in the top-level listing."
+
+schemas:
+  DocumentListing:
+    type: object
+    required: [root, files, query]
+    properties:
+      root:
+        type: string
+        description: Echo of the rootPath input used for list_directory
+      files:
+        type: array
+        description: Full paths to each file (not subdirectories) in the top-level listing of root
+        items:
+          type: string
+      query:
+        type: string
+        description: Echo of the optional query input; use empty string when the input was omitted
+
+orchestration:
+  entrypoint: document_lister
+  strategy: single
+  produces: DocumentListing
+
+executors:
+  - name: document_lister
+    type: agent
+    model:
+      provider:
+        name: ollama
+        type: builtin
+        version: 0.3.0
+      name: llama3.2:3b
+    instructions: |
+      You produce a JSON file listing using one MCP tool call.
+      1) Call `filesystem:list_directory` exactly once. Arguments must be a JSON object with a single string field `path` equal to the Context input `rootPath` (copy it verbatim). Do not nest another object under `path`.
+      2) The tool returns text lines like `[FILE] hello.txt` and `[DIR] notes`.
+         For each `[FILE] <name>` line, append one full path: `rootPath` + path separator + `<name>` (normalize separators to match the tool host).
+         Ignore `[DIR]` lines for the `files` array.
+      3) If the Context input `query` is non-empty, keep only entries whose basename contains that substring (case-insensitive).
+      4) Output ONLY a JSON object with keys:
+         - root (string): same string as `rootPath`
+         - files (array of strings): paths from steps 2-3
+         - query (string): echo the query input, or "" if omitted
+      Do not include any other keys or markdown.
+    outputSchemaRef: "#/schemas/DocumentListing"
+    mounts: []
+    policies:
+      toolAccess:
+        default: deny
+        allow:
+          - filesystem:list_directory
+      budgets:
+        maxToolCalls: 4
+        maxRuntimeSeconds: 120
+      writeControls:
+        mode: forbid

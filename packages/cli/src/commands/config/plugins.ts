@@ -12,7 +12,7 @@ export default class ConfigPlugins extends Command {
 
 Subcommands:
   get              List plugins.installs keys + security.plugins summary
-  add|update       Add or replace an install (use \`--install\` with --npm, --git, or --local to fetch materialize; \`update --upgrade\` re-fetches npm/git)
+  add|update       Add or replace an install (use \`--install\` with --npm, --git, or --local to fetch materialize; use \`--shim tool\` for non-ECP MCP packages)
   remove           Remove plugins.installs.<id> (\`--clean\` also deletes local installed files)`;
 
   async run(): Promise<void> {
@@ -24,6 +24,7 @@ Subcommands:
         "  get              plugins.installs + security.plugins",
         "  add <id> --npm <spec> [--path <dir>] [--kind tool]   (metadata-only)",
         "  add <id> --install --npm|git|local …               (fetch + hooks + wiring)",
+        "  add <id> --install ... --shim tool                 (shim wiring for packages without ECP manifest)",
         "  update <id> …                                      (same flags as add)",
         "  update <id> --upgrade                              (re-fetch using stored npm/git source)",
         "  remove <id> [--clean]",

@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -66,5 +66,34 @@ describe("ecp config plugins remove/update flags", () => {
         stdio: ["ignore", "pipe", "pipe"],
       }),
     ).toThrow(/--upgrade only supports existing npm or git installs/);
+  });
+
+  it("add --install --shim tool wires local package without ECP manifest", { timeout: 30_000 }, () => {
+    const dir = mkdtempSync(join(tmpdir(), "ecp-plugins-shim-"));
+    const pkgDir = join(dir, "raw-server");
+    mkdirSync(pkgDir, { recursive: true });
+    writeFileSync(
+      join(pkgDir, "package.json"),
+      JSON.stringify({ name: "@demo/raw-server", version: "0.0.1" }, null, 2),
+      "utf8",
+    );
+    writeFileSync(join(pkgDir, "server.js"), "console.log('ok')\n", "utf8");
+    writeFileSync(join(dir, "ecp.config.yaml"), 'version: "0.5"\n', "utf8");
+
+    const out = execSync(
+      `node "${runJs}" config plugins add demo --install --local "${pkgDir}" --shim tool --transport-type stdio --stdio-command node --stdio-arg server.js --server-name demo-mcp`,
+      {
+        encoding: "utf-8",
+        cwd: dir,
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
+    const cfg = readFileSync(join(dir, "ecp.config.yaml"), "utf8");
+
+    expect(out).toMatch(/Installed plugin "demo"/);
+    expect(cfg).toMatch(/demo-mcp:/);
+    expect(cfg).toMatch(/command: node/);
+    expect(cfg).toMatch(/- server\.js/);
+    expect(cfg).toMatch(/pluginKind: tool/);
   });
 });

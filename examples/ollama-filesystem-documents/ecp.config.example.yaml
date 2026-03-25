@@ -1,0 +1,32 @@
+# Copy to ecp.config.yaml or pass with --config.
+# Run `ecp run` / `ecp validate` from the repository root so the MCP root path resolves.
+version: "0.5"
+
+security:
+  models:
+    allowProviders: [ollama]
+    defaultProviders: [ollama]
+    allowedModels:
+      ollama: [llama3.2:3b, gemma3:1b]
+  tools:
+    allowServers: [filesystem]
+
+models:
+  providers:
+    ollama:
+      defaultModel: llama3.2:3b
+      supportedModels: [llama3.2:3b, gemma3:1b]
+      config:
+        baseURL: http://localhost:11434
+
+tools:
+  servers:
+    filesystem:
+      transport:
+        type: stdio
+        command: npx
+        args:
+          - "-y"
+          - "@modelcontextprotocol/server-filesystem"
+          - "examples/ollama-filesystem-documents/sample-docs"
+      config: {}

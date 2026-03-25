@@ -10,7 +10,14 @@ import {
   materializePluginArtifact,
   runPluginInstallHook,
 } from "./plugin-install.js";
-import { PLUGIN_KINDS, type PluginInstallSource, type PluginKind } from "@executioncontrolprotocol/spec";
+import {
+  assertEcpPluginManifest,
+  PLUGIN_KINDS,
+  type EcpPluginManifest,
+  type PluginInstallSource,
+  type PluginKind,
+} from "@executioncontrolprotocol/spec";
+import { buildToolServerEntryFromFlags } from "./config-wiring-cli.js";
 
 /**
  * Oclif `args` for `ecp config plugins add` and `ecp config plugins update`.
@@ -47,6 +54,31 @@ export const pluginInstallConfigFlags = {
     description: "Download or copy the artifact, run install hooks, merge wiring, and write plugins.installs",
     default: false,
   }),
+  shim: Flags.string({
+    description: "Use shim wiring when the package has no ECP manifest (currently supports: tool)",
+    options: ["tool"],
+  }),
+  "server-name": Flags.string({
+    description: "Shim tool server name (defaults to install id)",
+  }),
+  "transport-type": Flags.string({
+    description: "Shim tool transport type",
+    options: ["stdio", "sse"],
+  }),
+  "stdio-command": Flags.string({
+    description: "Shim stdio command (required for --shim tool with stdio unless source is npm)",
+  }),
+  "stdio-arg": Flags.string({
+    description: "Shim stdio arg (repeatable)",
+    multiple: true,
+  }),
+  "sse-url": Flags.string({
+    description: "Shim SSE URL (required for --shim tool with sse)",
+  }),
+  option: Flags.string({
+    description: "Shim server config option key=value (repeatable)",
+    multiple: true,
+  }),
   upgrade: Flags.boolean({
     description: "For update: re-fetch using the existing source (npm/git) and replace installed files",
     default: false,
@@ -77,6 +109,79 @@ function parseSource(flags: {
   if (n) return { type: "npm", spec: n };
   if (g) return { type: "git", url: g, ref: flags["git-ref"]?.trim() || undefined };
   return { type: "local", path: l! };
+}
+
+function npmPackageNameFromSpec(spec: string): string {
+  const trimmed = spec.trim();
+  const atIndex = trimmed.startsWith("@") ? trimmed.indexOf("@", 1) : trimmed.indexOf("@");
+  if (atIndex === -1) {
+    return trimmed;
+  }
+  return trimmed.slice(0, atIndex);
+}
+
+function buildToolShimManifest(args: { id: string }, flags: {
+  "server-name"?: string;
+  "transport-type"?: string;
+  "stdio-command"?: string;
+  "stdio-arg"?: string[];
+  "sse-url"?: string;
+  option?: string[];
+}, source: PluginInstallSource): EcpPluginManifest {
+  const transportType = (flags["transport-type"]?.trim() || "stdio") as "stdio" | "sse";
+  const serverName = flags["server-name"]?.trim() || args.id;
+
+  const defaultStdioCommand =
+    transportType === "stdio" && source.type === "npm" ? "npx" : flags["stdio-command"];
+  const defaultStdioArgs =
+    transportType === "stdio" && source.type === "npm"
+      ? ["-y", npmPackageNameFromSpec(source.spec)]
+      : flags["stdio-arg"];
+
+  const entry = buildToolServerEntryFromFlags({
+    transportType,
+    stdioCommand: defaultStdioCommand,
+    stdioArg: defaultStdioArgs,
+    sseUrl: flags["sse-url"],
+    optionFlags: flags.option,
+  });
+  return {
+    schemaVersion: "1",
+    id: args.id,
+    kind: "tool",
+    wiring: {
+      tool: {
+        serverName,
+        server: entry as unknown as Record<string, unknown>,
+      },
+    },
+  };
+}
+
+function buildShimManifest(
+  command: Command,
+  args: { id: string },
+  flags: {
+    shim?: string;
+    "server-name"?: string;
+    "transport-type"?: string;
+    "stdio-command"?: string;
+    "stdio-arg"?: string[];
+    "sse-url"?: string;
+    option?: string[];
+  },
+  source: PluginInstallSource,
+): EcpPluginManifest | undefined {
+  const shim = flags.shim?.trim();
+  if (!shim) {
+    return undefined;
+  }
+  if (shim !== "tool") {
+    command.error(`Unsupported --shim "${shim}". Currently supported: tool.`, { exit: 1 });
+  }
+  const manifest = buildToolShimManifest(args, flags, source);
+  assertEcpPluginManifest(manifest);
+  return manifest;
 }
 
 function resolveUpgradeSource(command: Command, args: { id: string }, flags: { npm?: string; git?: string; local?: string }, config: { plugins?: { installs?: Record<string, { source?: PluginInstallSource }> } }): PluginInstallSource {
@@ -117,6 +222,13 @@ export async function runPluginInstallConfigMutation(
     install?: boolean;
     upgrade?: boolean;
     force?: boolean;
+    shim?: string;
+    "server-name"?: string;
+    "transport-type"?: string;
+    "stdio-command"?: string;
+    "stdio-arg"?: string[];
+    "sse-url"?: string;
+    option?: string[];
     kind?: string;
   },
 ): Promise<void> {
@@ -145,15 +257,25 @@ export async function runPluginInstallConfigMutation(
       installId: args.id,
       source,
       force: (flags.force as boolean) || upgrade,
+      allowMissingManifest: Boolean(flags.shim),
       systemConfig: config,
     });
-    runPluginInstallHook(packageRoot, manifest);
-    applyManifestWiringToSystemConfig(config, manifest, {});
+    const effectiveManifest = manifest ?? buildShimManifest(command, args, flags, src);
+    if (!effectiveManifest) {
+      command.error(
+        `No ECP plugin manifest found for "${args.id}". Provide --shim tool for MCP-style packages without native ECP metadata.`,
+        { exit: 1 },
+      );
+    }
+    if (manifest) {
+      runPluginInstallHook(packageRoot, manifest);
+    }
+    applyManifestWiringToSystemConfig(config, effectiveManifest, {});
     config.plugins ??= {};
     config.plugins.installs ??= {};
     config.plugins.installs[args.id] = buildPluginInstallEntry({
       packageRoot,
-      manifest,
+      manifest: effectiveManifest,
       source: src,
     });
     persistConfig(configPath, config);

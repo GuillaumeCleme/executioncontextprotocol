@@ -46,6 +46,7 @@ describe("CLI flag and arg naming (kebab-case)", () => {
   });
 
   it("plugins remove/update expose --clean and --upgrade", { timeout: 60_000 }, () => {
+    expect(help("config plugins add")).toMatch(/--shim\b/);
     expect(help("config plugins remove")).toMatch(/--clean\b/);
     expect(help("config plugins update")).toMatch(/--upgrade\b/);
   });

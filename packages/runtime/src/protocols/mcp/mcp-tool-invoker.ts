@@ -17,6 +17,7 @@ import type {
   DiscoveredTool,
   ToolResult,
 } from "../tool-invoker.js";
+import { normalizeMcpToolArguments } from "./mcp-tool-args.js";
 
 /**
  * A connected MCP server with its client and transport.
@@ -99,7 +100,7 @@ export class MCPToolInvoker implements ToolInvoker {
     const server = this.getServer(serverName);
     const result = await server.client.callTool({
       name: toolName,
-      arguments: args,
+      arguments: normalizeMcpToolArguments(args),
     });
 
     if ("toolResult" in result) {
