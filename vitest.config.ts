@@ -25,10 +25,13 @@ export default defineConfig({
             "packages/spec/test/**/*.test.ts",
             "packages/runtime/test/**/*.test.ts",
             "packages/cli/test/**/*.test.ts",
+            "packages/recalled/test/**/*.test.ts",
           ],
           exclude: [
             "packages/runtime/test/integration/**",
             "packages/runtime/test/e2e/**",
+            "packages/recalled/test/integration/**",
+            "packages/recalled/test/e2e/**",
           ],
         },
       },
@@ -36,14 +39,20 @@ export default defineConfig({
         extends: true,
         test: {
           name: "integration",
-          include: ["packages/runtime/test/integration/**/*.test.ts"],
+          include: [
+            "packages/runtime/test/integration/**/*.test.ts",
+            "packages/recalled/test/integration/**/*.test.ts",
+          ],
         },
       },
       {
         extends: true,
         test: {
           name: "e2e",
-          include: ["packages/runtime/test/e2e/**/*.test.ts"],
+          include: [
+            "packages/runtime/test/e2e/**/*.test.ts",
+            "packages/recalled/test/e2e/**/*.test.ts",
+          ],
         },
       },
     ],
