@@ -37,11 +37,12 @@ version: "0.5"
 security:
   # Model providers — keys under `models.providers`.
   models:
-    allowProviders: [openai, ollama]
+    allowProviders: [openai, ollama, anthropic]
     defaultProviders: [openai]
     allowedModels:
       openai: [gpt-4o-mini, gpt-4o]
       ollama: [gemma3:1b, llama3.2:3b]
+      anthropic: [claude-sonnet-4-20250514, claude-haiku-35-20241022]
 
   # MCP tool servers — logical names under `tools.servers`.
   tools:
@@ -80,7 +81,7 @@ security:
   plugins:
     allowKinds: [provider, executor, logger, memory, tool, third-party]
     allowSourceTypes: [builtin]
-    allowIds: [openai, ollama, file, memory]
+    allowIds: [openai, ollama, anthropic, file, memory]
     # allowThirdParty: true
 
 # ----------------------------------------------------------------------
@@ -113,6 +114,10 @@ models:
       supportedModels: [gemma3:1b, llama3.2:3b]
       config:
         baseURL: http://localhost:11434
+    anthropic:
+      defaultModel: claude-sonnet-4-20250514
+      supportedModels: [claude-sonnet-4-20250514, claude-haiku-35-20241022]
+      config: {}
 
 # ----------------------------------------------------------------------
 # Tools — MCP servers (`ecp config add|update --type tools <name> --transport-type stdio|sse …` or `--file …`). Each server: transport (+ credentials) + `config`.

@@ -74,7 +74,7 @@ export default class Run extends EcpEnvironmentCommand {
     provider: Flags.string({
       char: "p",
       description: "Override provider (must be allowed by system config policy)",
-      options: ["openai", "ollama"] as const,
+      options: ["openai", "ollama", "anthropic"] as const,
     }),
     config: Flags.string({
       char: "c",
@@ -146,7 +146,7 @@ export default class Run extends EcpEnvironmentCommand {
 
     if (!providerToUse) {
       this.error(
-        'Model provider could not be inferred from the Context. Pass --provider openai|ollama.',
+        'Model provider could not be inferred from the Context. Pass --provider openai|ollama|anthropic.',
         { exit: 1 },
       );
     }
@@ -180,6 +180,7 @@ export default class Run extends EcpEnvironmentCommand {
     const providers = systemConfig?.models?.providers ?? {};
     const openaiDefaults = providers.openai ?? {};
     const ollamaDefaults = providers.ollama ?? {};
+    const anthropicDefaults = providers.anthropic ?? {};
     const ollamaBaseURL =
       typeof ollamaDefaults.config?.baseURL === "string"
         ? ollamaDefaults.config.baseURL
@@ -191,6 +192,7 @@ export default class Run extends EcpEnvironmentCommand {
         baseURL: ollamaBaseURL,
         defaultModel: selectedModel ?? ollamaDefaults.defaultModel,
       },
+      anthropic: { defaultModel: selectedModel ?? anthropicDefaults.defaultModel },
     });
     registerBuiltinLoggers(registry, { version: BUILTIN_PLUGIN_VERSION, file: {} });
     registerBuiltinPlugins(registry, { version: BUILTIN_PLUGIN_VERSION });
@@ -266,7 +268,7 @@ export default class Run extends EcpEnvironmentCommand {
       mcpServerAllowList,
       secretBroker,
       agentEndpoints: agentEndpointsForEngine,
-      defaultModel: selectedModel ?? openaiDefaults.defaultModel ?? ollamaDefaults.defaultModel,
+      defaultModel: selectedModel ?? openaiDefaults.defaultModel ?? ollamaDefaults.defaultModel ?? anthropicDefaults.defaultModel,
       modelOverride: selectedModel,
       debug: flags.debug,
       trace: flags.trace,

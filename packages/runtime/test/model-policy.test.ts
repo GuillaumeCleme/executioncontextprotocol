@@ -87,5 +87,6 @@ describe("resolveEffectiveModelNameForProvider", () => {
   it("uses built-in default when no config", () => {
     expect(resolveEffectiveModelNameForProvider("openai", undefined, {})).toBe("gpt-4o");
     expect(resolveEffectiveModelNameForProvider("ollama", undefined, {})).toBe("gemma3:1b");
+    expect(resolveEffectiveModelNameForProvider("anthropic", undefined, {})).toBe("claude-sonnet-4-20250514");
   });
 });

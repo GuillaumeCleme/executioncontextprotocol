@@ -10,6 +10,8 @@ import { OpenAIProvider } from "../providers/openai/openai-provider.js";
 import type { OpenAIProviderConfig } from "../providers/openai/openai-provider.js";
 import { OllamaProvider } from "../providers/ollama/ollama-provider.js";
 import type { OllamaProviderConfig } from "../providers/ollama/ollama-provider.js";
+import { AnthropicProvider } from "../providers/anthropic/anthropic-provider.js";
+import type { AnthropicProviderConfig } from "../providers/anthropic/anthropic-provider.js";
 import { createFileLogger } from "./loggers/file-logger.js";
 import type { FileLoggerConfig } from "./loggers/file-logger.js";
 import { registerBuiltinMemoryPlugin } from "../plugins/memory/index.js";
@@ -30,6 +32,9 @@ export interface BuiltinModelProviderConfig {
 
   /** Default Ollama provider configuration. */
   ollama?: OllamaProviderConfig;
+
+  /** Default Anthropic provider configuration. */
+  anthropic?: AnthropicProviderConfig;
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -69,6 +74,20 @@ export function registerBuiltinModelProviders(
     create(overrides) {
       return new OllamaProvider({
         ...config.ollama,
+        ...asRecord(overrides),
+      });
+    },
+  });
+
+  registry.registerModelProvider({
+    id: "anthropic",
+    kind: "provider",
+    source: "builtin",
+    version,
+    description: "Built-in Anthropic model provider extension.",
+    create(overrides): ModelProvider {
+      return new AnthropicProvider({
+        ...config.anthropic,
         ...asRecord(overrides),
       });
     },
