@@ -12,6 +12,8 @@ const BUILTIN_DEFAULT_MODEL: Record<string, string> = {
   openai: "gpt-4o",
   ollama: "gemma3:1b",
   anthropic: "claude-sonnet-4-20250514",
+  gemini: "gemini-2.5-flash",
+  mistral: "mistral-small-latest",
 };
 
 /**
