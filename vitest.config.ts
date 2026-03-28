@@ -25,6 +25,7 @@ export default defineConfig({
             "packages/spec/test/**/*.test.ts",
             "packages/runtime/test/**/*.test.ts",
             "packages/cli/test/**/*.test.ts",
+            "packages/recalled/test/**/*.test.ts",
           ],
           exclude: [
             "packages/runtime/test/integration/**",

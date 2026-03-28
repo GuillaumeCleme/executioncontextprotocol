@@ -10,8 +10,8 @@
     "packages/*"
   ],
   "scripts": {
-    "clean": "node scripts/clean-dist.mjs && tsc -b packages/spec packages/plugins packages/runtime packages/cli --clean",
-    "build": "npm run clean && tsc -b packages/spec packages/plugins packages/runtime packages/cli && npm run generate:schema --workspace=@executioncontrolprotocol/spec",
+    "clean": "node scripts/clean-dist.mjs && tsc -b packages/spec packages/plugins packages/recalled packages/runtime packages/cli --clean",
+    "build": "npm run clean && tsc -b packages/spec packages/plugins packages/recalled packages/runtime packages/cli && npm run generate:schema --workspace=@executioncontrolprotocol/spec",
     "build:clean": "npm run clean",
     "lint": "eslint . && markdownlint-cli2 \"**/*.md\" \"#node_modules\" \"#packages/*/node_modules\" \"#examples/*/node_modules\"",
     "lint:ts": "eslint .",

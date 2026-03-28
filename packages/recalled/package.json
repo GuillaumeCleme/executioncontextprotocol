@@ -1,0 +1,45 @@
+{
+  "name": "@executioncontrolprotocol/recalled",
+  "version": "0.5.1",
+  "description": "Recalled — markdown-first, standalone memory plugin with hierarchical document chunking, dual short/long-term memory, and budget-aware retrieval",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/executioncontrolprotocol/executioncontrolprotocol",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/executioncontrolprotocol/executioncontrolprotocol.git",
+    "directory": "packages/recalled"
+  },
+  "keywords": [
+    "ecp",
+    "memory",
+    "recalled",
+    "rag",
+    "markdown",
+    "retrieval"
+  ],
+  "private": false,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "sql.js": "^1.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.3",
+    "typescript": "^5.7.0"
+  }
+}
